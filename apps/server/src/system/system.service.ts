@@ -67,7 +67,7 @@ export class SystemService {
   async restore(mode: 'replace' | 'merge', data: any) {
     // 兼容旧版本备份（重命名前的 format 标识）
     if (!data || (data.format !== 'suiji-ledger-backup' && data.format !== 'moneyrecord-backup'))
-      throw new BadRequestException('不是有效的 SuijiLedger 备份文件')
+      throw new BadRequestException('不是有效的 Suiji Ledger 备份文件')
     if (!['replace', 'merge'].includes(mode)) throw new BadRequestException('恢复模式不合法')
     const rows = Array.isArray(data.snapshots) ? data.snapshots : []
 

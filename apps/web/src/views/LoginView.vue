@@ -44,7 +44,7 @@ async function submit() {
   <div class="login-wrap">
     <div class="login-inner">
       <div class="login-logo">⚖️</div>
-      <div class="login-title">SuijiLedger</div>
+      <div class="login-title">Suiji Ledger</div>
       <div class="login-sub">每月记一次余额 · 自动平账 · 看清资产负债</div>
       <CellGroup inset style="margin-top: 28px">
         <Field v-model="pwd" type="password" label="口令" placeholder="访问口令" @keyup.enter="submit" />

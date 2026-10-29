@@ -47,7 +47,7 @@ onMounted(async () => {
     const rd = Number(s.settings.reminderDay || 28)
     if (!done && day >= rd) {
       try {
-        new Notification('SuijiLedger · 该平账了', {
+        new Notification('Suiji Ledger · 该平账了', {
           body: `${curYm} 还没平账（提醒日每月 ${rd} 号），花 1 分钟对个账吧`,
           icon: '/icon.svg',
         })

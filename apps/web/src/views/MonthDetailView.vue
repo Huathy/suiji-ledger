@@ -117,7 +117,7 @@ async function shareImage() {
   ctx.fillRect(0, 0, W, 420)
   ctx.fillStyle = '#ffffff'
   ctx.font = '600 40px system-ui'
-  ctx.fillText(`SuijiLedger · ${d.ym} 月报`, 60, 90)
+  ctx.fillText(`Suiji Ledger · ${d.ym} 月报`, 60, 90)
   ctx.font = '28px system-ui'
   ctx.globalAlpha = 0.85
   ctx.fillText('净资产', 60, 170)
@@ -150,10 +150,10 @@ async function shareImage() {
   ctx.fillStyle = '#8f959e'
   ctx.font = '26px system-ui'
   ctx.fillText(`Σ变动条目 = 余额变动 = ${m(d.delta ?? 0, true)} ✓ 平`, 60, H - 140)
-  ctx.fillText('由 SuijiLedger 生成 · 每月 1 分钟看清资产负债', 60, H - 80)
+  ctx.fillText('由 Suiji Ledger 生成 · 每月 1 分钟看清资产负债', 60, H - 80)
   const blob: Blob | null = await new Promise((r) => cv.toBlob((b) => r(b), 'image/png'))
   if (!blob) return showFailToast('生成失败')
-  const where = await saveTextFile(`SuijiLedger-${d.ym}-月报.png`, blob)
+  const where = await saveTextFile(`Suiji Ledger-${d.ym}-月报.png`, blob)
   showSuccessToast(typeof where === 'string' && (where.startsWith('已保存') || where.startsWith('D:')) ? where : '月报图已生成')
 }
 /** 月报图内联用（不经隐藏开关，由调用方 m() 处理） */

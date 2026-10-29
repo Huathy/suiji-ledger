@@ -54,7 +54,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         await this.$executeRawUnsafe(`ALTER TABLE "Loan" ADD COLUMN "accountId" INTEGER`)
       }
     }
-    if (created) console.log('[SuijiLedger] 数据库表已初始化/补齐（' + names.filter((n) => !have.has(n)).join(', ') + '）')
+    if (created) console.log('[Suiji Ledger] 数据库表已初始化/补齐（' + names.filter((n) => !have.has(n)).join(', ') + '）')
   }
 
   /** 确保内置「平账」类型存在（幂等） */

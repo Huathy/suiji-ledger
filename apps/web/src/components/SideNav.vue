@@ -24,7 +24,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <aside class="side-nav">
-    <div class="logo">⚖️ SuijiLedger</div>
+    <div class="logo">⚖️ Suiji Ledger</div>
     <router-link to="/">🏠 总览</router-link>
     <router-link to="/trends">📈 走势</router-link>
     <router-link to="/accounts">🏦 账户</router-link>

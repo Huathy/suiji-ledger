@@ -39,6 +39,6 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT || 3000)
   await app.listen(port, '0.0.0.0')
-  console.log(`[SuijiLedger] listening on http://localhost:${port}  data=${DATA_DIR}`)
+  console.log(`[Suiji Ledger] listening on http://localhost:${port}  data=${DATA_DIR}`)
 }
 bootstrap()

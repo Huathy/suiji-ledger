@@ -1,6 +1,6 @@
 {
-  "name": "SuijiLedger · 月度平账",
-  "short_name": "SuijiLedger",
+  "name": "Suiji Ledger · 月度平账",
+  "short_name": "Suiji Ledger",
   "description": "每月记一次账户余额，自动平账，看清资产负债与日均开销",
   "start_url": "/",
   "scope": "/",

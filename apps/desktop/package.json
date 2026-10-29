@@ -3,7 +3,7 @@
   "version": "0.3.4",
   "private": true,
   "main": "main.js",
-  "author": "SuijiLedger",
+  "author": "Suiji Ledger",
   "description": "月度平账记资产负债 · 桌面版",
   "build": {
     "appId": "com.suiji.ledger.desktop",

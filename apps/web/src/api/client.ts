@@ -23,7 +23,7 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-/** 安卓桥：保存文件（文本或二进制）到手机「下载/SuijiLedger」；无桥（浏览器）回退 a.download */
+/** 安卓桥：保存文件（文本或二进制）到手机「下载/Suiji Ledger」；无桥（浏览器）回退 a.download */
 export async function saveTextFile(name: string, content: string | Blob): Promise<string> {
   const mime = 'application/octet-stream'
   const blob = content instanceof Blob ? content : new Blob([content], { type: mime })

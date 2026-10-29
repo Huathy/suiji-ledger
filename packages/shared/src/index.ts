@@ -1,4 +1,4 @@
-/** SuijiLedger 共享类型与纯函数（前后端共用，无框架依赖） */
+/** Suiji Ledger 共享类型与纯函数（前后端共用，无框架依赖） */
 
 export type Direction = 'income' | 'expense' | 'neutral'
 export type AccountKind = 'asset' | 'liability'

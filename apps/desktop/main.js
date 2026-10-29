@@ -1,7 +1,7 @@
 /**
- * SuijiLedger 桌面版主进程：
+ * Suiji Ledger 桌面版主进程：
  * 内嵌 NestJS 服务（同进程，动态端口）+ BrowserWindow 加载界面。
- * 数据目录：%APPDATA%/SuijiLedger/data（SQLite；自动从旧版 Windows 包迁移）
+ * 数据目录：%APPDATA%/suiji-ledger-desktop/data（SQLite；自动从旧版 Windows 包迁移）
  */
 const { app, BrowserWindow, Menu, shell } = require('electron')
 const path = require('path')
@@ -101,7 +101,7 @@ async function bootstrap() {
     minHeight: 640,
     autoHideMenuBar: true,
     backgroundColor: '#121318',
-    title: 'SuijiLedger 月度平账',
+    title: 'Suiji Ledger 月度平账',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

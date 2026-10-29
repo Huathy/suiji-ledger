@@ -1,4 +1,4 @@
-# 生成 SuijiLedger 图标 icon.ico（蓝色圆角方块 + 白色天平，与 Web 图标同形）
+# 生成 Suiji Ledger 图标 icon.ico（蓝色圆角方块 + 白色天平，与 Web 图标同形）
 from PIL import Image, ImageDraw
 
 S = 256

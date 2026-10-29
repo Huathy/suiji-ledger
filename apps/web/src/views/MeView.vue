@@ -210,7 +210,7 @@ async function logout() {
     </div>
 
     <div style="text-align: center; font-size: 10.5px; color: var(--t3); padding: 18px 0 26px; line-height: 1.8">
-      SuijiLedger v0.1.0 · 月度平账版<br>
+      Suiji Ledger v0.1.0 · 月度平账版<br>
       每月 1 分钟 · 看清资产负债 · 数据 100% 自有
     </div>
 

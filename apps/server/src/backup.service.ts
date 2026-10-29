@@ -47,7 +47,7 @@ export class BackupService {
         fs.unlinkSync(path.join(dir, oldest))
       }
     } catch (e: any) {
-      console.warn('[SuijiLedger] 自动备份失败:', e?.message || e)
+      console.warn('[Suiji Ledger] 自动备份失败:', e?.message || e)
     }
   }
 }

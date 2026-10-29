@@ -1,4 +1,4 @@
-# SuijiLedger 安卓 APK 手工构建脚本（零 Gradle）
+# Suiji Ledger 安卓 APK 手工构建脚本（零 Gradle）
 # 依赖：JDK(keytool/javac/jar)、build-tools r35(aapt2/d8/zipalign/apksigner)、android.jar
 # 用法：python build-apk.py   （先确保 apps/web/dist-mobile 已构建）
 import os

@@ -774,7 +774,7 @@ export async function localHandle(method: string, path: string, body?: any): Pro
       const mode = body?.mode === 'merge' ? 'merge' : 'replace'
       // 兼容旧版本备份（重命名前的 format 标识）
       if (!data || (data.format !== 'suiji-ledger-backup' && data.format !== 'moneyrecord-backup'))
-        bad('不是有效的 SuijiLedger 备份文件')
+        bad('不是有效的 Suiji Ledger 备份文件')
       if (mode === 'replace') {
         db.entries = []; db.snapshots = []; db.accounts = []; db.types = []; db.loans = []
         db.types.push({ id: nextId(), name: '平账', emoji: '⚖️', color: null, direction: 'neutral', builtin: true, sort: 0 })
