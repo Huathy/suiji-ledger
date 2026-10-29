@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuijiLedger UI 设计稿 · 高保真示意 v1.0</title>
+<style>
+  :root{
+    --brand:#3B82F6; --bg:#F6F7FB; --surface:#FFFFFF; --line:#EEF0F4;
+    --t1:#1F2329; --t2:#646A73; --t3:#8F959E;
+    --expense:#F04848; --income:#00B578; --transfer:#7B61FF; --warn:#FF8800;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
+  body{background:#EBEDF2;padding:32px 24px 64px;}
+  .doc-head{max-width:1480px;margin:0 auto 28px;}
+  .doc-head h1{font-size:22px;color:var(--t1);}
+  .doc-head p{font-size:13px;color:var(--t2);margin-top:6px;line-height:1.7;}
+  .board{display:flex;flex-wrap:wrap;gap:36px;justify-content:center;max-width:1480px;margin:0 auto;}
+  .shot{width:330px;}
+  .shot-title{font-size:13px;font-weight:600;color:var(--t2);margin:0 0 10px 6px;}
+  .shot-title em{font-style:normal;color:var(--t3);font-weight:400;margin-left:8px;}
+  .phone{width:330px;height:672px;background:var(--bg);border-radius:32px;border:8px solid #1B1D24;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 18px 40px rgba(20,24,40,.18);}
+  .statusbar{height:28px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-size:11px;color:var(--t1);flex-shrink:0;}
+  .body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .tabbar{height:58px;background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:center;flex-shrink:0;padding-bottom:4px;}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--t3);cursor:default;}
+  .tab .ic{font-size:19px;line-height:1;}
+  .tab.on{color:var(--brand);font-weight:600;}
+  .tab-plus{flex:1;display:flex;justify-content:center;align-items:center;}
+  .plus-btn{width:46px;height:46px;border-radius:50%;background:var(--brand);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(59,130,246,.4);margin-top:-18px;}
+  /* 通用 */
+  .row{display:flex;align-items:center;}
+  .num{font-variant-numeric:tabular-nums;}
+  .card{background:var(--surface);border-radius:14px;padding:14px 16px;margin:0 14px;}
+  /* ===== 明细页 ===== */
+  .h-nav{padding:8px 16px 10px;display:flex;justify-content:space-between;align-items:center;}
+  .h-nav .book{font-size:16px;font-weight:600;color:var(--t1);}
+  .h-nav .book i{font-style:normal;color:var(--t3);font-size:11px;margin-left:3px;}
+  .h-nav .acts{display:flex;gap:14px;font-size:16px;color:var(--t2);}
+  .sum-card{display:flex;flex-direction:column;gap:8px;}
+  .sum-top{display:flex;gap:28px;}
+  .sum-item .lab{font-size:11px;color:var(--t2);}
+  .sum-item .val{font-size:19px;font-weight:700;margin-top:2px;}
+  .sum-bottom{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--t2);}
+  .bar{height:5px;border-radius:3px;background:#EDF1F7;flex:1;margin:0 10px;overflow:hidden;}
+  .bar i{display:block;height:100%;width:32%;background:var(--brand);border-radius:3px;}
+  .monthbar{display:flex;justify-content:center;align-items:center;gap:10px;padding:12px 0 8px;font-size:13px;color:var(--t1);font-weight:600;}
+  .list{flex:1;overflow:hidden;padding:0 14px;}
+  .dayhead{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);padding:10px 4px 6px;}
+  .item{display:flex;align-items:center;gap:11px;padding:9px 4px;}
+  .item+.item{border-top:1px solid var(--line);}
+  .cicon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .it-main{flex:1;min-width:0;}
+  .it-title{font-size:13.5px;color:var(--t1);font-weight:500;display:flex;gap:5px;align-items:center;}
+  .tagchip{font-size:9px;color:var(--t3);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-weight:400;}
+  .it-sub{font-size:11px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .it-money{font-size:14.5px;font-weight:700;}
+  .m-exp{color:var(--expense);} .m-inc{color:var(--income);} .m-tr{color:var(--transfer);}
+  /* ===== 记一笔 ===== */
+  .add-close{display:flex;justify-content:space-between;padding:6px 16px;font-size:15px;color:var(--t2);}
+  .seg{display:flex;gap:8px;padding:8px 16px 4px;}
+  .seg span{flex:1;text-align:center;font-size:12.5px;padding:6px 0;border-radius:9px;color:var(--t2);background:var(--surface);}
+  .seg span.on{background:var(--brand);color:#fff;font-weight:600;}
+  .amount{display:flex;justify-content:center;align-items:baseline;gap:4px;padding:16px 0 4px;}
+  .amount .cur{font-size:20px;color:var(--t1);font-weight:600;}
+  .amount .v{font-size:42px;font-weight:700;color:var(--t1);letter-spacing:1px;}
+  .amount .clr{font-size:13px;color:var(--t3);align-self:flex-start;margin-top:12px;}
+  .fee-hint{text-align:center;font-size:11px;color:var(--t3);margin-bottom:10px;}
+  .cates{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:2px 14px 8px;}
+  .cate{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 6px;border-radius:11px;background:var(--surface);}
+  .cate .ci{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .cate .cn{font-size:10.5px;color:var(--t2);}
+  .cate.on{outline:2px solid var(--brand);}
+  .cate.on .cn{color:var(--brand);font-weight:600;}
+  .subcate{display:flex;gap:7px;padding:0 14px 10px;overflow:hidden;}
+  .subcate span{font-size:11px;color:var(--brand);background:#EAF1FE;border-radius:14px;padding:4px 12px;white-space:nowrap;}
+  .quick{margin:0 14px;background:var(--surface);border-radius:12px;padding:2px 14px;}
+  .q-row{display:flex;align-items:center;gap:9px;padding:8.5px 0;font-size:12.5px;color:var(--t1);}
+  .q-row+.q-row{border-top:1px solid var(--line);}
+  .q-row .qi{font-size:14px;}
+  .q-row .val{color:var(--t3);margin-left:auto;font-size:12px;}
+  .q-row .cb{margin-left:auto;width:14px;height:14px;border:1.5px solid #D3D7DE;border-radius:4px;}
+  .pad{margin-top:auto;background:var(--surface);padding:10px 10px 14px;}
+  .pad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+  .key{height:38px;border-radius:9px;background:#F4F6FA;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--t1);font-weight:500;}
+  .key.op{color:var(--brand);background:#EAF1FE;font-size:15px;}
+  .key.save{background:var(--brand);color:#fff;font-size:13.5px;font-weight:600;}
+  .key.again{background:#EAF1FE;color:var(--brand);font-size:12px;}
+  /* ===== 图表页 ===== */
+  .st-head{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 6px;}
+  .st-head .t{font-size:16px;font-weight:600;color:var(--t1);}
+  .pill{font-size:11.5px;color:var(--t2);background:var(--surface);border-radius:14px;padding:4px 12px;}
+  .dim{display:flex;gap:8px;padding:4px 16px 10px;}
+  .dim span{font-size:12px;padding:5px 16px;border-radius:16px;color:var(--t2);background:var(--surface);}
+  .dim span.on{background:var(--expense);color:#fff;font-weight:600;}
+  .chart-card .total{font-size:11px;color:var(--t2);}
+  .chart-card .tv{font-size:20px;font-weight:700;color:var(--expense);margin:2px 0 10px;}
+  .trend{display:flex;align-items:flex-end;gap:7px;height:92px;}
+  .trend i{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#FF8A8A,var(--expense));opacity:.9;}
+  .trend i.hot{opacity:1;position:relative;}
+  .donut-row{display:flex;gap:14px;margin-top:12px;}
+  .donut{width:104px;height:104px;border-radius:50%;flex-shrink:0;
+    background:conic-gradient(#F04848 0 37%, #FF8800 37% 59%, #3B82F6 59% 74%, #00B578 74% 84%, #CBD2DC 84% 100%);
+    display:flex;align-items:center;justify-content:center;}
+  .donut::after{content:"";width:60px;height:60px;border-radius:50%;background:var(--surface);}
+  .rank{flex:1;display:flex;flex-direction:column;gap:7px;justify-content:center;}
+  .rk{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--t1);}
+  .rk .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .rk .pct{margin-left:auto;color:var(--t3);}
+  /* ===== 资产页 ===== */
+  .as-nav{display:flex;justify-content:space-between;padding:8px 16px 6px;align-items:center;}
+  .as-nav .t{font-size:16px;font-weight:600;color:var(--t1);}
+  .as-nav .plus{width:28px;height:28px;border-radius:9px;background:var(--brand);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;}
+  .net-card .lab{font-size:11px;color:var(--t2);}
+  .net-card .big{font-size:24px;font-weight:700;color:var(--t1);margin:3px 0 8px;}
+  .net-card .sub{display:flex;gap:20px;font-size:11.5px;}
+  .net-card .sub b{font-weight:600;}
+  .grp{font-size:11.5px;color:var(--t3);padding:12px 18px 4px;}
+  .acct{display:flex;align-items:center;gap:11px;padding:10px 4px;}
+  .acct+.acct{border-top:1px solid var(--line);}
+  .acct .nm{font-size:13.5px;color:var(--t1);}
+  .acct .ds{font-size:10.5px;color:var(--t3);margin-top:2px;}
+  .acct .money{margin-left:auto;font-size:14px;font-weight:700;color:var(--t1);}
+  .acct .money.neg{color:var(--expense);}
+  /* ===== 我的页 ===== */
+  .me-head{display:flex;align-items:center;gap:13px;padding:16px 18px 14px;}
+  .avatar{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#60A5FA);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;}
+  .me-head .hi{font-size:15px;font-weight:600;color:var(--t1);}
+  .me-head .sub{font-size:11px;color:var(--t3);margin-top:3px;}
+  .menu{display:flex;flex-direction:column;}
+  .mi{display:flex;align-items:center;gap:11px;padding:11.5px 16px;font-size:13.5px;color:var(--t1);background:var(--surface);}
+  .mi .ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0;}
+  .mi .arr{margin-left:auto;color:#C4C9D2;font-size:13px;}
+  .mi .badge{margin-left:auto;font-size:10px;color:var(--t3);}
+  .gap8{height:8px;} .gap12{height:12px;}
+  .sec{border-radius:14px;overflow:hidden;margin:0 14px;}
+  .sec .mi+.mi{border-top:1px solid var(--line);}
+  /* ===== 导入预览 ===== */
+  .im-nav{display:flex;justify-content:space-between;padding:8px 16px;font-size:14px;color:var(--t2);align-items:center;}
+  .im-steps{display:flex;gap:6px;padding:2px 16px 10px;}
+  .im-steps i{flex:1;height:4px;border-radius:2px;background:#DDE2EA;}
+  .im-steps i.on{background:var(--brand);}
+  .im-steps i.done{background:#7FB0FA;}
+  .pv-card .t{font-size:12px;color:var(--t2);}
+  .pv-card .n{font-size:17px;font-weight:700;color:var(--t1);margin-top:2px;}
+  .pv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+  .pv-cell{background:#F7F9FC;border-radius:10px;padding:8px 6px;text-align:center;}
+  .pv-cell b{display:block;font-size:15px;color:var(--t1);}
+  .pv-cell span{font-size:9.5px;color:var(--t3);}
+  .new-list{margin-top:10px;font-size:11.5px;color:var(--t2);line-height:2;}
+  .new-list b{color:var(--brand);}
+  .map-row{display:flex;align-items:center;gap:8px;padding:9px 0;font-size:12px;color:var(--t1);}
+  .map-row+.map-row{border-top:1px solid var(--line);}
+  .map-row .from{color:var(--t2);}
+  .map-row .to{background:#EAF1FE;color:var(--brand);border-radius:12px;padding:3px 10px;font-size:11px;}
+  .map-row .chg{margin-left:auto;color:var(--t3);font-size:11px;}
+  .im-btn{margin:14px 16px 0;background:var(--brand);color:#fff;text-align:center;border-radius:12px;padding:11px 0;font-size:14px;font-weight:600;}
+  .im-note{text-align:center;font-size:10.5px;color:var(--t3);margin-top:10px;}
+  .caption{font-size:11px;color:var(--t3);text-align:center;margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="doc-head">
+  <h1>SuijiLedger · UI 设计稿（高保真示意）v1.0</h1>
+  <p>6 个关键界面：明细（首页）/ 记一笔 / 图表 / 资产 / 我的 / 导入预览。视觉规范见《03_UI设计稿.md》§2 Design Tokens；本页为浅色模式基准稿，实现时同规格输出深色模式。金额均为示例数据。</p>
+</div>
+
+<div class="board">
+
+  <!-- ① 明细页 -->
+  <div class="shot">
+    <div class="shot-title">T1 明细页 <em>首页 · 月汇总 + 日分组流水</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="h-nav">
+          <div class="book">默认账本 <i>▾</i></div>
+          <div class="acts"><span>🔍</span><span>⋮</span></div>
+        </div>
+        <div class="card sum-card">
+          <div class="sum-top">
+            <div class="sum-item"><div class="lab">本月支出</div><div class="val num m-exp">¥4,821.50</div></div>
+            <div class="sum-item"><div class="lab">本月收入</div><div class="val num m-inc">¥12,300.00</div></div>
+          </div>
+          <div class="sum-bottom">
+            <span>结余 <b class="num">¥7,478.50</b></span>
+            <div class="bar"><i></i></div>
+            <span>预算 32%</span>
+          </div>
+        </div>
+        <div class="monthbar"><span>‹</span><span>2026年10月</span><span>›</span></div>
+        <div class="list">
+          <div class="dayhead"><span>10月24日 · 今天</span><span>支出 ¥128.00</span></div>
+          <div class="item">
+            <div class="cicon" style="background:#FFEBEB">🍜</div>
+            <div class="it-main">
+              <div class="it-title">餐饮 · 午餐</div>
+              <div class="it-sub">牛肉面 · 微信支付</div>
+            </div>
+            <div class="it-money num m-exp">−35.00</div>
+          </div>
+          <div class="item">
+            <div class="cicon" style="background:#E8F4FF">🚇</div>
+            <div class="it-main">
+              <div class="it-title">交通 · 地铁</div>
+              <div class="it-sub">通勤</div>
+            </div>
+            <div class="it-money num m-exp">−4.50</div>
+          </div>
+          <div class="item">
+            <div class="cicon" style="background:#E6F9F1">💰</div>
+            <div class="it-main">
+              <div class="it-title">职业收入 · 工资</div>
+              <div class="it-sub">10月发薪 · 招商银行卡</div>
+            </div>
+            <div class="it-money num m-inc">+12,000.00</div>
+          </div>
+          <div class="item">
+            <div class="cicon" style="background:#F0EBFF">🔄</div>
+            <div class="it-main">
+              <div class="it-title">转账 <span class="tagchip">含手续费1.00</span></div>
+              <div class="it-sub">微信零钱 → 招商银行卡</div>
+            </div>
+            <div class="it-money num m-tr">−500.00</div>
+          </div>
+          <div class="item">
+            <div class="cicon" style="background:#FFF3E0">🛒</div>
+            <div class="it-main">
+              <div class="it-title">购物 · 日用品 <span class="tagchip">导入</span><span class="tagchip">退款</span></div>
+              <div class="it-sub">京东自营 · 支付宝</div>
+            </div>
+            <div class="it-money num m-exp">−89.00</div>
+          </div>
+          <div class="dayhead" style="margin-top:6px"><span>10月23日 · 昨天</span><span>支出 ¥299.00</span></div>
+          <div class="item">
+            <div class="cicon" style="background:#FFEBEB">🍲</div>
+            <div class="it-main">
+              <div class="it-title">餐饮 · 晚餐</div>
+              <div class="it-sub">和朋友聚餐</div>
+            </div>
+            <div class="it-money num m-exp">−186.00</div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab on"><span class="ic">📋</span>明细</div>
+          <div class="tab"><span class="ic">📈</span>图表</div>
+          <div class="tab-plus"><div class="plus-btn">＋</div></div>
+          <div class="tab"><span class="ic">🏦</span>资产</div>
+          <div class="tab"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 记一笔 -->
+  <div class="shot">
+    <div class="shot-title">T3 记一笔 <em>全屏 · 类型段控 + 分类宫格 + 数字键盘</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="add-close"><span>✕</span><span>⋯</span></div>
+        <div class="seg"><span class="on">支出</span><span>收入</span><span>转账</span><span>还款</span></div>
+        <div class="amount"><span class="cur">¥</span><span class="v num">35.00</span><span class="clr">⌫</span></div>
+        <div class="fee-hint">备注：牛肉面 &nbsp;·&nbsp; 优惠券抵扣 2.00</div>
+        <div class="cates">
+          <div class="cate on"><div class="ci" style="background:#FFEBEB">🍜</div><div class="cn">餐饮</div></div>
+          <div class="cate"><div class="ci" style="background:#FFF3E0">🛒</div><div class="cn">购物</div></div>
+          <div class="cate"><div class="ci" style="background:#E9F8EF">🧻</div><div class="cn">日用</div></div>
+          <div class="cate"><div class="ci" style="background:#E8F4FF">🚇</div><div class="cn">交通</div></div>
+          <div class="cate"><div class="ci" style="background:#F0EBFF">🎬</div><div class="cn">娱乐</div></div>
+          <div class="cate"><div class="ci" style="background">#E6F5FF">💊</div><div class="cn">医疗</div></div>
+          <div class="cate"><div class="ci" style="background:#FFF8E1">📚</div><div class="cn">教育</div></div>
+          <div class="cate"><div class="ci" style="background:#F2F3F5">☰</div><div class="cn">管理</div></div>
+        </div>
+        <div class="subcate"><span>午餐 ✓</span><span>晚餐</span><span>早餐</span><span>零食</span><span>饮料</span></div>
+        <div class="quick">
+          <div class="q-row"><span class="qi">🏦</span>微信支付<span class="val">▾</span></div>
+          <div class="q-row"><span class="qi">📅</span>今天 12:30<span class="val">▾</span></div>
+          <div class="q-row"><span class="qi">🏷</span>标签<span class="val">选填 ›</span></div>
+          <div class="q-row"><span class="qi">🧾</span>报销<span class="cb"></span></div>
+        </div>
+        <div class="pad">
+          <div class="pad-grid">
+            <div class="key">1</div><div class="key">2</div><div class="key">3</div><div class="key op">⌫</div>
+            <div class="key">4</div><div class="key">5</div><div class="key">6</div><div class="key op">+</div>
+            <div class="key">7</div><div class="key">8</div><div class="key">9</div><div class="key op">−</div>
+            <div class="key">.</div><div class="key">0</div><div class="key save">保存</div><div class="key again">再记</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">保存后 Toast 1s 自动返回；「再记」保留类型/账户。<br>转账类型时宫格区替换为「转出账户 → 转入账户 + 手续费」。</div>
+  </div>
+
+  <!-- ③ 图表页 -->
+  <div class="shot">
+    <div class="shot-title">T2 图表页 <em>趋势 + 分类占比</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="st-head"><div class="t">统计</div><div class="pill">月 ▾ &nbsp;⏳</div></div>
+        <div class="dim"><span class="on">支出</span><span>收入</span></div>
+        <div class="card chart-card">
+          <div class="total">本月共支出</div>
+          <div class="tv num">¥4,821.50</div>
+          <div class="trend">
+            <i style="height:34%"></i><i style="height:58%"></i><i style="height:22%"></i><i style="height:72%"></i>
+            <i style="height:45%"></i><i style="height:88%"></i><i style="height:30%"></i><i style="height:64%"></i>
+            <i style="height:40%"></i><i style="height:100%"></i><i style="height:52%"></i><i style="height:38%"></i>
+            <i style="height:76%"></i><i style="height:44%"></i><i style="height:60%"></i><i style="height:28%"></i>
+          </div>
+        </div>
+        <div class="card donut-row">
+          <div class="donut"></div>
+          <div class="rank">
+            <div class="rk"><span class="dot" style="background:#F04848"></span>餐饮<b class="num" style="margin-left:4px">¥1,826</b><span class="pct">37%</span></div>
+            <div class="rk"><span class="dot" style="background:#FF8800"></span>购物<b class="num" style="margin-left:4px">¥1,061</b><span class="pct">22%</span></div>
+            <div class="rk"><span class="dot" style="background:#3B82F6"></span>日用<b class="num" style="margin-left:4px">¥723</b><span class="pct">15%</span></div>
+            <div class="rk"><span class="dot" style="background:#00B578"></span>交通<b class="num" style="margin-left:4px">¥482</b><span class="pct">10%</span></div>
+            <div class="rk"><span class="dot" style="background:#CBD2DC"></span>其他<b class="num" style="margin-left:4px">¥729</b><span class="pct">16%</span></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div style="font-size:11.5px;color:var(--t2)">日均支出 <b class="num" style="color:var(--t1)">¥219.16</b> · 最高单日 <b class="num" style="color:var(--t1)">¥861.00</b>（10月10日）</div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><span class="ic">📋</span>明细</div>
+          <div class="tab on"><span class="ic">📈</span>图表</div>
+          <div class="tab-plus"><div class="plus-btn">＋</div></div>
+          <div class="tab"><span class="ic">🏦</span>资产</div>
+          <div class="tab"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">点击排行条目下钻二级分类；右上筛选与明细页共用筛选器。</div>
+  </div>
+
+  <!-- ④ 资产页 -->
+  <div class="shot">
+    <div class="shot-title">T4 资产页 <em>净资产 + 分组账户</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="as-nav"><div class="t">资产</div><div class="plus">＋</div></div>
+        <div class="card net-card">
+          <div class="lab">净资产</div>
+          <div class="big num">¥86,432.00</div>
+          <div class="sub">
+            <span>总资产 <b class="num" style="color:var(--t1)">¥102,300.00</b></span>
+            <span>总负债 <b class="num" style="color:var(--expense)">¥15,868.00</b></span>
+          </div>
+        </div>
+        <div class="grp">现金与储蓄</div>
+        <div class="card" style="margin-top:4px">
+          <div class="acct">
+            <div class="cicon" style="background:#E9F8EF">💵</div>
+            <div><div class="nm">现金</div><div class="ds">不计息 · 手动记账</div></div>
+            <div class="money num">¥1,200.00</div>
+          </div>
+          <div class="acct">
+            <div class="cicon" style="background:#E8F4FF">🏦</div>
+            <div><div class="nm">招商银行储蓄卡</div><div class="ds">尾号 8888</div></div>
+            <div class="money num">¥58,900.00</div>
+          </div>
+        </div>
+        <div class="grp">网络资产</div>
+        <div class="card" style="margin-top:4px">
+          <div class="acct">
+            <div class="cicon" style="background:#E6F5FF">🟢</div>
+            <div><div class="nm">微信钱包</div><div class="ds">本月 +3,120 / −2,794</div></div>
+            <div class="money num">¥326.50</div>
+          </div>
+          <div class="acct">
+            <div class="cicon" style="background:#E8F4FF">🔵</div>
+            <div><div class="nm">支付宝余额</div><div class="ds">本月 +860 / −2,405</div></div>
+            <div class="money num">¥1,805.00</div>
+          </div>
+        </div>
+        <div class="grp">信贷负债</div>
+        <div class="card" style="margin-top:4px">
+          <div class="acct">
+            <div class="cicon" style="background:#FFEBEB">💳</div>
+            <div><div class="nm">招行信用卡</div><div class="ds">额度 ¥30,000 · 可用 ¥14,132</div></div>
+            <div class="money neg num">−¥15,868.00</div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><span class="ic">📋</span>明细</div>
+          <div class="tab"><span class="ic">📈</span>图表</div>
+          <div class="tab-plus"><div class="plus-btn">＋</div></div>
+          <div class="tab on"><span class="ic">🏦</span>资产</div>
+          <div class="tab"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">点击账户 → 该账户流水与余额演算；分组可自定义（免费，无钱迹 VIP 限制）。</div>
+  </div>
+
+  <!-- ⑤ 我的页 -->
+  <div class="shot">
+    <div class="shot-title">T5 我的页 <em>功能与数据管理入口</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="me-head">
+          <div class="avatar">💰</div>
+          <div>
+            <div class="hi">我的账本</div>
+            <div class="sub">已记账 1,247 天 · 12,847 笔 · 自动备份正常</div>
+          </div>
+        </div>
+        <div class="sec menu">
+          <div class="mi"><span class="ico" style="background:#3B82F6">📊</span>预算<span class="badge">已设 1 个 ›</span></div>
+          <div class="mi"><span class="ico" style="background:#7B61FF">🏷</span>标签<span class="arr">›</span></div>
+          <div class="mi"><span class="ico" style="background:#00B578">🔁</span>周期记账<span class="badge">3 个 ›</span></div>
+          <div class="mi"><span class="ico" style="background:#FF8800">🤝</span>借还中心<span class="badge">应收 ¥2,000 ›</span></div>
+          <div class="mi"><span class="ico" style="background:#F04848">🗂</span>分类管理<span class="arr">›</span></div>
+        </div>
+        <div class="gap12"></div>
+        <div class="sec menu">
+          <div class="mi"><span class="ico" style="background:#3B82F6">📥</span>导入钱迹 / 微信 / 支付宝<span class="arr">›</span></div>
+          <div class="mi"><span class="ico" style="background:#60A5FA">📤</span>导出 CSV / XLSX<span class="arr">›</span></div>
+          <div class="mi"><span class="ico" style="background:#94A3B8">💾</span>备份与恢复<span class="badge">今日 03:00 已备份 ›</span></div>
+          <div class="mi"><span class="ico" style="background:#CBD2DC">🕘</span>回收站<span class="badge">2 ›</span></div>
+        </div>
+        <div class="gap12"></div>
+        <div class="sec menu">
+          <div class="mi"><span class="ico" style="background:#1F2329">🌗</span>外观 · 深色模式<span class="arr">跟随系统 ›</span></div>
+          <div class="mi"><span class="ico" style="background:#646A73">🔑</span>安全 · 修改口令<span class="arr">›</span></div>
+          <div class="mi"><span class="ico" style="background:#8F959E">ℹ️</span>关于 SuijiLedger<span class="badge">v1.0.0 ›</span></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><span class="ic">📋</span>明细</div>
+          <div class="tab"><span class="ic">📈</span>图表</div>
+          <div class="tab-plus"><div class="plus-btn">＋</div></div>
+          <div class="tab"><span class="ic">🏦</span>资产</div>
+          <div class="tab on"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">导入导出为 SuijiLedger 兼容钱迹数据的核心入口。</div>
+  </div>
+
+  <!-- ⑥ 导入预览 -->
+  <div class="shot">
+    <div class="shot-title">导入向导 · 步骤③ <em>预览确认（兼容性关键流程）</em></div>
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>●●● ⌁ 🔋</span></div>
+      <div class="body">
+        <div class="im-nav"><span>✕</span><b style="color:var(--t1);font-size:15px">导入预览</b><span style="color:var(--brand)">帮助</span></div>
+        <div class="im-steps"><i class="done"></i><i class="done"></i><i class="on"></i><i></i></div>
+        <div class="card pv-card">
+          <div class="t">钱迹账单_20231024.xlsx</div>
+          <div class="n num">共解析 12,847 行</div>
+          <div class="pv-grid">
+            <div class="pv-cell"><b>9,832</b><span>支出</span></div>
+            <div class="pv-cell"><b>2,103</b><span>收入</span></div>
+            <div class="pv-cell"><b>780</b><span>转账</span></div>
+            <div class="pv-cell"><b>132</b><span>其他</span></div>
+          </div>
+          <div class="new-list">
+            将新建：<b>3 个分类</b>（宠物、数码、订阅）<br>
+            将新建：<b>2 个账户</b>（公交卡、饭卡）<br>
+            检测重复：<b>6 行</b>（将跳过）
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div style="font-size:12px;color:var(--t2);padding:4px 0 2px">导入到账本：默认账本 ▾</div>
+          <div style="font-size:12px;color:var(--t2);padding:8px 0 4px">分类映射（可调整，保存后下次自动应用）</div>
+          <div class="map-row"><span class="from">餐饮美食</span>→<span class="to">餐饮 ✓</span><span class="chg">修改</span></div>
+          <div class="map-row"><span class="from">交通出行</span>→<span class="to">交通 ✓</span><span class="chg">修改</span></div>
+          <div class="map-row"><span class="from">日用百货</span>→<span class="to">新建「日用」</span><span class="chg">修改</span></div>
+        </div>
+        <div class="im-btn">确认导入</div>
+        <div class="im-note">导入过程事务化，失败自动回滚，不会产生半截数据</div>
+      </div>
+    </div>
+    <div class="caption">对齐钱迹 ImportPack 范式：解析 → 预览新增项与映射 → 确认入库。</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "suiji-ledger",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "npm install && npm run db:push",
+    "db:push": "npm -w apps/server run db:push",
+    "dev:server": "npm -w apps/server run dev",
+    "dev:web": "npm -w apps/web run dev",
+    "build:web": "npm -w apps/web run build",
+    "start": "npm -w apps/server run start",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8",
+    "vitest": "^2.1.1"
+  }
+}

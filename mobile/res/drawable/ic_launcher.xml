@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SuijiLedger 天平图标（VectorDrawable，与 Web 端 icon.svg 同形） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- 圆角方形底 -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M110,0 L402,0 A110,110 0 0 1 512,110 L512,402 A110,110 0 0 1 402,512 L110,512 A110,110 0 0 1 0,402 L0,110 A110,110 0 0 1 110,0 Z"/>
+
+    <!-- 顶环 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M256,88 A30,30 0 1 0 256,148 A30,30 0 1 0 256,88 Z M256,108 A10,10 0 1 1 256,128 A10,10 0 1 1 256,108 Z"/>
+
+    <!-- 中心柱 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M246,148 L266,148 L266,378 L246,378 Z"/>
+
+    <!-- 横梁 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M126,196 L386,196 A10,10 0 0 1 386,216 L126,216 A10,10 0 0 1 126,196 Z"/>
+
+    <!-- 左吊绳与秤盘 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M156,220 L104,320 L208,320 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M96,320 L216,320 A12,12 0 0 1 216,344 L96,344 A12,12 0 0 1 96,320 Z"/>
+
+    <!-- 右吊绳与秤盘 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M356,220 L304,320 L408,320 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M296,320 L416,320 A12,12 0 0 1 416,344 L296,344 A12,12 0 0 1 296,320 Z"/>
+
+    <!-- 底座 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M150,388 L362,388 A14,14 0 0 1 362,416 L150,416 A14,14 0 0 1 150,388 Z"/>
+</vector>

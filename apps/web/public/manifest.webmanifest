@@ -1,0 +1,15 @@
+{
+  "name": "SuijiLedger · 月度平账",
+  "short_name": "SuijiLedger",
+  "description": "每月记一次账户余额，自动平账，看清资产负债与日均开销",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#3B82F6",
+  "background_color": "#F6F7FB",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

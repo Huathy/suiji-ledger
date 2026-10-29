@@ -1,0 +1,10 @@
+services:
+  suiji-ledger:
+    build: .
+    container_name: suiji-ledger
+    ports:
+      - "3000:3000"
+    volumes:
+      # 数据库 / 备份 / 上传 都在这个卷里，整目录即数据
+      - ./data:/app/apps/server/data
+    restart: unless-stopped

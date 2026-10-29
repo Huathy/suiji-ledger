@@ -1,0 +1,20 @@
+# 统一换行策略：源码与配置保持 LF，Windows 批处理用 CRLF
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.apk binary
+*.exe binary
+*.zip binary
+*.jks binary
+*.woff binary
+*.woff2 binary

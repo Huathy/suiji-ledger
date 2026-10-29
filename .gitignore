@@ -1,0 +1,73 @@
+# ---------- 依赖 ----------
+node_modules/
+.pnpm-store/
+.yarn/
+
+# ---------- 构建产物 ----------
+dist/
+dist-windows/
+build/
+pack/
+staging/
+# Electron 打包用的服务端编译产物
+apps/desktop/server/
+# 服务端 tsc 编译产物
+apps/server/build-pkg/
+# 移动端 WebView 资源
+apps/web/dist-mobile/
+# APK 构建中间产物
+mobile/build/
+# Android SDK（体积大）
+mobile/android-sdk/
+# PyInstaller 中间产物
+windows/build/
+# Windows 便携包组装目录
+windows/pack/
+# Windows 便携包运行时依赖
+windows/staging/
+
+# ---------- 运行时数据 / 备份 ----------
+data/
+apps/server/data/
+*.db
+*.sqlite
+*.sqlite3
+backups/
+# 本地调试快照
+apps/server/oct.json
+apps/server/oct_check_ignored.json
+
+# ---------- 密钥 / 签名 / 环境变量 ----------
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+# keystore 口令本地文件
+mobile/keystore-pass.txt
+
+# ---------- 日志与临时文件 ----------
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 安装包 ----------
+*.apk
+*.aab
+*.exe
+*.zip
+*.7z
+*.rar
+
+# ---------- 本地工具目录 ----------
+.workbuddy-ai/
+.vscode/
+.idea/

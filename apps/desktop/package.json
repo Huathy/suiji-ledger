@@ -1,0 +1,38 @@
+{
+  "name": "suiji-ledger-desktop",
+  "version": "0.3.4",
+  "private": true,
+  "main": "main.js",
+  "author": "SuijiLedger",
+  "description": "月度平账记资产负债 · 桌面版",
+  "build": {
+    "appId": "com.suiji.ledger.desktop",
+    "productName": "SuijiLedger",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server/**",
+      "node_modules/**"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "SuijiLedger-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "SuijiLedger-Portable-${version}.${ext}"
+    },
+    "electronVersion": "33.2.0"
+  }
+}

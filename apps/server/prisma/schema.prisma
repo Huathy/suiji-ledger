@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  passwordHash String
+  createdAt    Int
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+// 收支方向：income / expense / neutral（平账内置为 neutral）
+model RecordType {
+  id        Int          @id @default(autoincrement())
+  name      String
+  emoji     String
+  color     String?
+  direction String
+  builtin   Boolean      @default(false)
+  sort      Int          @default(0)
+  entries   ChangeEntry[]
+}
+
+// kind: asset | liability；负债账户余额存“欠款正数”，净资产 = 资产 − 负债
+model Account {
+  id          Int              @id @default(autoincrement())
+  name        String
+  emoji       String
+  kind        String
+  group       String?
+  initBalance Int              @default(0)
+  inNetWorth  Boolean          @default(true)
+  sort        Int              @default(0)
+  archived    Boolean          @default(false)
+  note        String?
+  createdAt   Int
+  snapshots   MonthlySnapshot[]
+}
+
+// 月度快照：某月某账户的余额（一次平账写一批）
+model MonthlySnapshot {
+  id         Int     @id @default(autoincrement())
+  ym         String // 2026-10
+  accountId  Int
+  balance    Int // 分
+  recordDate String // 2026-10-24（该次平账实际记录日，可回填历史）
+  note       String?
+  account    Account @relation(fields: [accountId], references: [id])
+
+  @@unique([ym, accountId])
+  @@index([ym])
+  @@index([accountId])
+}
+
+// 变动条目：对当月余额变化的解释；Σ条目 ≡ Σ余额变动（恒等式由自动平账条目兜底）
+model ChangeEntry {
+  id        Int        @id @default(autoincrement())
+  ym        String
+  typeId    Int
+  amount    Int // 分，带符号
+  note      String?
+  accountId Int?
+  auto      Boolean    @default(false) // true = 系统生成的平账兜底条目
+  type      RecordType @relation(fields: [typeId], references: [id])
+
+  @@index([ym])
+}
+
+// 借入借出台账（只记账不直接动余额；收回/还上记录进度）
+model Loan {
+  id            Int     @id @default(autoincrement())
+  direction     String // in = 借入(我欠人) | out = 借出(人欠我)
+  counterparty  String
+  amount        Int // 分
+  settledAmount Int     @default(0) // 已收回/已还上（分）
+  date          String // 发生日期 YYYY-MM-DD
+  dueDate       String?
+  accountId     Int? // 关联资金账户（选填）
+  note          String?
+  createdAt     Int
+}
+
+// 回收站：删除的条目/借还/账户先入站，支持恢复与永久删除
+model DeletedItem {
+  id        Int    @id @default(autoincrement())
+  kind      String // entry | loan | account
+  summary   String
+  payload   String // 原 JSON
+  deletedAt Int
+}
