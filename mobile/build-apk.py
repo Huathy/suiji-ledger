@@ -38,8 +38,8 @@ D8 = os.path.join(BT, "d8.bat")
 ZIPALIGN = os.path.join(BT, "zipalign.exe")
 APKSIGNER = os.path.join(BT, "apksigner.bat")
 
-VERSION_NAME = "0.2.7"
-VERSION_CODE = "9"
+VERSION_NAME = "0.2.8"
+VERSION_CODE = "10"
 OUT_APK = os.path.join(ROOT, "dist", f"SuijiLedger-v{VERSION_NAME}.apk")
 
 BUILD = os.path.join(HERE, "build")
