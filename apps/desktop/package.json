@@ -1,6 +1,6 @@
 {
   "name": "suiji-ledger-desktop",
-  "version": "0.3.5",
+  "version": "0.3.7",
   "private": true,
   "main": "main.js",
   "author": "Suiji Ledger",

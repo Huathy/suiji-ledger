@@ -2,6 +2,12 @@ import { Body, Controller, Get, Post, Put, Query, Res, UseGuards } from '@nestjs
 import { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard'
 import { SystemService } from './system.service'
+import { fileStamp, stampText } from '../../../../packages/shared/src/index'
+
+/** 导出文件名统一带 年月日-时分秒（问题 3） */
+function stampedName(prefix: string, ext: string): string {
+  return `${prefix}-${fileStamp()}.${ext}`
+}
 
 @Controller('system')
 @UseGuards(AuthGuard)
@@ -31,10 +37,11 @@ export class SystemController {
   @Get('backup')
   async backup(@Res() res: Response) {
     const data = await this.svc.backup()
-    const name = `suiji-ledger-backup-${new Date().toISOString().slice(0, 10)}.json`
+    const name = stampedName('suiji-ledger-backup', 'json')
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename="${name}"`)
-    res.send(JSON.stringify(data, null, 2))
+    // 备份内容里同时写入可读导出时间（本地时区），与文件名一致
+    res.send(JSON.stringify({ ...data, exportedAtText: stampText() }, null, 2))
   }
 
   @Post('restore')
@@ -45,8 +52,9 @@ export class SystemController {
   @Get('matrix.csv')
   async matrixCsv(@Res() res: Response) {
     const csv = await this.svc.matrixCsv()
+    const name = stampedName('suiji-ledger-balance-sheet', 'csv')
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition', 'attachment; filename="suiji-ledger-balance-sheet.csv"')
+    res.setHeader('Content-Disposition', `attachment; filename="${name}"`)
     res.send(csv)
   }
 }

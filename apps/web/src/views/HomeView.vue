@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from 'vant'
 import { api } from '../api/client'
-import { todayYMD } from '../../../../packages/shared/src/index'
+import { todayYMD, fmtPct } from '../../../../packages/shared/src/index'
 import SparkLine from '../components/SparkLine.vue'
 import BalanceSheet from '../components/BalanceSheet.vue'
 import SyncBadge from '../components/SyncBadge.vue'
@@ -11,6 +11,15 @@ import { useUiStore } from '../stores/ui'
 import { money, deltaClass } from '../utils/money'
 
 interface MonthPoint { ym: string; recordDate: string; networth: number; delta: number | null }
+/** /stats/summary：环比、同比、日均开销增减（问题 5） */
+interface Summary {
+  ym: string | null
+  networth?: number; delta?: number | null
+  momPct?: number | null; yoyPct?: number | null
+  prevYm?: string | null; yoyYm?: string | null
+  days?: number | null; dailyAvg?: number | null; dailyNet?: number | null
+  estimated?: boolean | null; prevDailyAvg?: number | null; dailyAvgDelta?: number | null
+}
 interface MonthDetail {
   ym: string; recordDate: string | null; reconciled: boolean
   accounts: { id: number; name: string; emoji: string; kind: string; group: string | null; balance: number | null; prevBalance: number; delta: number | null }[]
@@ -25,16 +34,19 @@ const router = useRouter()
 const ui = useUiStore()
 const months = ref<MonthPoint[]>([])
 const detail = ref<MonthDetail | null>(null)
+const summary = ref<Summary | null>(null)
 const settings = ref<Record<string, string>>({})
 const loading = ref(true)
 
 onMounted(async () => {
-  const [m, s] = await Promise.all([
+  const [m, s, sum] = await Promise.all([
     api<{ months: MonthPoint[] }>('/months?limit=12'),
     api<{ settings: Record<string, string> }>('/system/settings'),
+    api<Summary>('/stats/summary').catch(() => null),
   ])
   months.value = m.months
   settings.value = s.settings
+  summary.value = sum && sum.ym ? sum : null
   if (m.months.length) {
     detail.value = await api<MonthDetail>('/month/' + m.months[0].ym)
   }
@@ -75,6 +87,46 @@ const spark = computed(() => months.value.slice(0, 8).reverse().map((m) => m.net
 const topEntries = computed(() => (detail.value?.entries || []).slice(0, 4))
 const recentMonths = computed(() => months.value.slice(1, 4))
 
+/** PC 指标卡（问题 5）：环比 / 同比 / 日均开销增减 / 日均净结余 */
+const kpis = computed(() => {
+  const s = summary.value
+  if (!s || !s.ym) return []
+  const hasMom = s.momPct !== null && s.momPct !== undefined
+  const hasYoy = s.yoyPct !== null && s.yoyPct !== undefined
+  const hasAvg = s.dailyAvg !== null && s.dailyAvg !== undefined
+  const dDelta = s.dailyAvgDelta
+  const hasDelta = dDelta !== null && dDelta !== undefined
+  return [
+    {
+      label: '较上月增长',
+      value: hasMom ? fmtPct(s.momPct!) : '—',
+      sub: s.prevYm ? `${money(s.delta ?? null, { signed: true })} · 对比 ${s.prevYm}` : '暂无上一个记录点',
+      cls: (s.delta ?? 0) > 0 ? 'm-inc' : (s.delta ?? 0) < 0 ? 'm-exp' : 'm-mut',
+    },
+    {
+      label: '较去年同月',
+      value: hasYoy ? fmtPct(s.yoyPct!) : '—',
+      sub: s.yoyYm ? `对比 ${s.yoyYm}` : '去年同月无记录',
+      cls: (s.yoyPct ?? 0) > 0 ? 'm-inc' : (s.yoyPct ?? 0) < 0 ? 'm-exp' : 'm-mut',
+    },
+    {
+      label: '日均开销',
+      value: hasAvg ? '¥' + money(s.dailyAvg!) : '—',
+      sub: hasDelta
+        ? `${money(dDelta!, { signed: true })} vs ${s.prevYm || '上月'}`
+        : s.days ? `区间 ${s.days} 天 · 需两个记录点才能比` : '需两个记录点',
+      // 开销变多=红、变少=绿（与结余语义相反，按「花钱多少」着色）
+      cls: (dDelta ?? 0) > 0 ? 'm-exp' : (dDelta ?? 0) < 0 ? 'm-inc' : 'm-mut',
+    },
+    {
+      label: '日均净结余',
+      value: s.dailyNet !== null && s.dailyNet !== undefined ? money(s.dailyNet, { signed: true }) : '—',
+      sub: s.estimated ? '未记收入大项 · 开销为估算' : s.days ? `区间 ${s.days} 天` : '',
+      cls: (s.dailyNet ?? 0) > 0 ? 'm-inc' : (s.dailyNet ?? 0) < 0 ? 'm-exp' : 'm-mut',
+    },
+  ]
+})
+
 function gotoReconcile() { router.push('/reconcile') }
 </script>
 
@@ -113,13 +165,24 @@ function gotoReconcile() { router.push('/reconcile') }
         @click="router.push('/trends')" @keyup.enter="router.push('/trends')">
         <div style="font-size: 11px; opacity: 0.85">净资产 · {{ detail.ym }}</div>
         <div class="net-big num">¥{{ money(detail.networth) }}</div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px">
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; flex-wrap: wrap">
           <span class="num chip">
             {{ detail.delta === null ? '本月首记' : '本月 ' + money(detail.delta, { signed: true }) }}
           </span>
+          <span v-if="summary && summary.momPct != null" class="num chip">环比 {{ fmtPct(summary.momPct) }}</span>
+          <span v-if="summary && summary.yoyPct != null" class="num chip">同比 {{ fmtPct(summary.yoyPct) }}</span>
           <span v-if="detail.interval" class="num">日均开销 ¥{{ money(detail.interval.dailyAvg) }} · {{ detail.interval.days }} 天</span>
         </div>
         <SparkLine v-if="spark.length > 1" :points="spark" :height="36" class="net-spark" />
+      </div>
+
+      <!-- PC 指标卡（问题 5） -->
+      <div v-if="ui.isDesktop && kpis.length" class="kpi-row">
+        <div v-for="k in kpis" :key="k.label" class="kpi-card">
+          <div class="kpi-label">{{ k.label }}</div>
+          <div class="kpi-val num" :class="k.cls">{{ k.value }}</div>
+          <div class="kpi-sub num">{{ k.sub }}</div>
+        </div>
       </div>
 
       <!-- 平账提醒 -->
@@ -166,7 +229,7 @@ function gotoReconcile() { router.push('/reconcile') }
       </div>
 
       <!-- PC 资产负债总表 -->
-      <BalanceSheet v-if="ui.isDesktop" style="margin-top: 14px" />
+      <BalanceSheet v-if="ui.isDesktop" />
     </template>
   </div>
 </template>
@@ -179,6 +242,15 @@ function gotoReconcile() { router.push('/reconcile') }
 }
 .netcard .chip { background: rgba(255, 255, 255, 0.18); border-radius: 8px; padding: 2px 8px; }
 .net-spark { display: block; margin-top: 10px; max-width: 100%; }
+/* PC 指标卡（问题 5）：环比 / 同比 / 日均开销增减 / 日均净结余 */
+.kpi-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi-card { background: var(--surface); border-radius: 13px; padding: 12px 14px; border: 1px solid var(--line); }
+.kpi-label { font-size: 11.5px; color: var(--t3); }
+.kpi-val { font-size: 21px; font-weight: 700; margin: 4px 0 2px; }
+.kpi-sub { font-size: 10.5px; color: var(--t3); min-height: 15px; }
+@media (max-width: 1280px) {
+  .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .h-act {
   color: var(--t2); text-decoration: none; font-size: 17px;
   width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;

@@ -51,7 +51,7 @@ function onTabChange(name: string | number) {
       <van-tabbar v-if="!ui.isDesktop && isTab && routerReady" :model-value="tab" @update:model-value="onTabChange" fixed placeholder safe-area-inset-bottom>
         <TabbarItem name="home" icon="wap-home-o">总览</TabbarItem>
         <TabbarItem name="trends" icon="chart-trending-o">走势</TabbarItem>
-        <!-- 中央凸起 FAB：全系统唯一录入入口，层级高于普通 Tab -->
+        <!-- 中央平账入口：与其他 Tab 等高，不探出 TabBar 上沿 -->
         <div class="fab-cell" role="button" tabindex="0" aria-label="平账"
           @click="onTabChange('reconcile')" @keyup.enter="onTabChange('reconcile')">
           <span class="fab" :class="{ on: tab === 'reconcile' }">＋</span>
@@ -65,22 +65,20 @@ function onTabChange(name: string | number) {
 </template>
 
 <style>
-/* 底部中央平账按钮：独立 flex 单元格，位置稳定 */
+/* 底部中央平账按钮：独立 flex 单元格，与其它 Tab 同排同高，不探出 TabBar 上沿 */
 .fab-cell {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  justify-content: flex-end; gap: 3px; cursor: pointer; padding-bottom: 4px;
-  /* 整块可点区 ≥44px（含内边距），满足触控目标 */
-  min-height: 50px;
+  justify-content: center; gap: 2px; cursor: pointer;
+  /* 不写死高度：随 tabbar 内容盒（含安全区）伸缩，避免被顶出上沿 */
+  min-width: 0;
 }
 .fab {
-  width: 46px; height: 46px; border-radius: 50%;
-  background: var(--brand); color: #fff; font-size: 26px;
-  line-height: 46px; text-align: center; margin-top: -26px;
-  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.4);
-  border: 3px solid var(--surface);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--brand); color: #fff; font-size: 18px;
+  line-height: 28px; text-align: center;
   transition: transform 0.12s ease;
 }
 .fab:active { transform: scale(0.94); }
-.fab.on { background: var(--brand); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22), 0 6px 14px rgba(59, 130, 246, 0.4); }
-.fab-label { font-size: 10px; color: var(--brand); font-weight: 600; }
+.fab.on { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22); }
+.fab-label { font-size: 10px; color: var(--brand); font-weight: 600; line-height: 1; }
 </style>

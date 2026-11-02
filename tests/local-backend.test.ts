@@ -1,5 +1,6 @@
 // 离线本地后端单测：平账恒等式 / 快速调余额单独成条 / 回收站恢复 / 借还台账
 import { describe, it, expect, beforeAll, vi } from 'vitest'
+import { todayYMD } from '../packages/shared/src/index'
 
 // localStorage 桩（backend.ts 依赖）
 const store = new Map<string, string>()
@@ -47,9 +48,12 @@ describe('本地后端：月度平账闭环', () => {
   it('单账户调余额：单独生成平账记录，与批量条目并列且恒等式保持', async () => {
     const accs = await localHandle('GET', '/accounts')
     const acc = accs.find((a: any) => a.name === '测试卡')
+    // set-balance 写入的是「当前自然月」，故断言也必须跟着当前月，不能写死 2026-10
+    // （原用例在 10 月之外运行必挂：时间炸弹修复）
+    const curYm = todayYMD().slice(0, 7)
     const r = await localHandle('POST', `/accounts/${acc.id}/set-balance`, { balance: 5990000, note: '余额调整 10-25' })
     expect(r.delta).toBe(100000)
-    const d = await localHandle('GET', '/month/2026-10')
+    const d = await localHandle('GET', '/month/' + curYm)
     const manual = d.entries.filter((e: any) => !e.auto)
     const adjust = manual.find((e: any) => e.typeId === 1 && (e.note || '').includes('余额调整'))
     expect(adjust).toBeTruthy()
@@ -90,5 +94,43 @@ describe('本地后端：月度平账闭环', () => {
     const tc = await localHandle('GET', '/stats/type-contribution?limit=12')
     expect(tc.items.some((i: any) => i.name === '工资')).toBe(true)
     expect(tc.items.some((i: any) => i.name === '平账（自动）')).toBe(true)
+  })
+
+  it('总览摘要 /stats/summary：环比/同比/日均增减（问题 5，离线与服务端同口径）', async () => {
+    // 显式指定月份，避免依赖「当前自然月」（前面的 set-balance 用例会写入本月快照）
+    const s = await localHandle('GET', '/stats/summary?ym=2026-10')
+    expect(s.ym).toBe('2026-10')
+    // 2026-09 → 2026-10：5570000 → 5890000，净增 320000
+    expect(s.networth).toBe(5890000)
+    expect(s.delta).toBe(320000)
+    expect(s.prevYm).toBe('2026-09')
+    expect(s.momPct).toBeCloseTo((320000 / 5570000) * 100, 3)
+    expect(s.yoyPct).toBeNull() // 无 2025-10 记录点 → 同比不可算
+    // 区间：2026-09-30 → 2026-10-24 = 24 天；大项收入 1200000
+    // 支出估算 = 1200000 − 320000 = 880000 → 日均 36667
+    expect(s.days).toBe(24)
+    expect(s.estimated).toBe(false)
+    expect(s.dailyAvg).toBe(Math.round(880000 / 24))
+    expect(s.dailyNet).toBe(Math.round(320000 / 24))
+    // 上一个记录点（2026-09）是首月，无日均 → 增减不可算
+    expect(s.prevDailyAvg).toBeNull()
+    expect(s.dailyAvgDelta).toBeNull()
+    // 首月无上月基线
+    const first = await localHandle('GET', '/stats/summary?ym=2026-09')
+    expect(first.momPct).toBeNull()
+    expect(first.prevYm).toBeNull()
+    // 不传月份 → 返回最近记录点
+    const latest = await localHandle('GET', '/stats/summary')
+    expect(latest.ym).toMatch(/^\d{4}-\d{2}$/)
+    // 合法格式但该月无记录点 → 按「无数据」返回，不崩（越界守卫）
+    const none = await localHandle('GET', '/stats/summary?ym=1999-01')
+    expect(none.ym).toBeNull()
+  })
+
+  it('分组自定义顺序设置可读写（问题 2，settings 存 JSON 数组）', async () => {
+    await localHandle('PUT', '/system/settings', { settings: { groupSortMode: 'custom', groupOrder: JSON.stringify(['充值', '投资', '资金']) } })
+    const r = await localHandle('GET', '/system/settings')
+    expect(r.settings.groupSortMode).toBe('custom')
+    expect(JSON.parse(r.settings.groupOrder)).toEqual(['充值', '投资', '资金'])
   })
 })

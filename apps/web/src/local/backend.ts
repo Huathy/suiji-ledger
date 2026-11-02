@@ -9,6 +9,9 @@ import {
   computeIntervalStats,
   daysBetween,
   fromCents,
+  pctChange,
+  stampText,
+  yoyYm,
   YM_RE,
   YMD_RE,
 } from '../../../../packages/shared/src/index'
@@ -289,6 +292,9 @@ function matrixCsv(): string {
       r.delta === null ? '' : fromCents(r.delta), daily,
     ].join(','))
   }
+  // 末尾附导出时间（问题 3），与服务端 matrixCsv 保持一致
+  lines.push('')
+  lines.push(`# 导出时间,${stampText()}`)
   return '\uFEFF' + lines.join('\r\n')
 }
 
@@ -727,6 +733,47 @@ export async function localHandle(method: string, path: string, body?: any): Pro
     })
     return { months: out.slice(-limit) }
   }
+  if (p1 === 'stats' && p2 === 'summary') {
+    // 与 server StatsService.summary 同口径（问题 5：总览环比/同比/日均增减）
+    const q = new URLSearchParams(path.split('?')[1] || '')
+    const pts = pointsAsc()
+    const curYm = q.get('ym') && YM_RE.test(q.get('ym')!) ? q.get('ym')! : pts.at(-1)?.ym
+    if (!curYm) return { ym: null }
+    const i = pts.findIndex((p) => p.ym === curYm)
+    if (i < 0) return { ym: null } // 该月没有记录点：按「无数据」返回，避免越界取值
+    const cur = pts[i]
+    const prev = i > 0 ? pts[i - 1] : null
+    const yoy = pts.find((p) => p.ym === yoyYm(curYm)) || null
+    const incomeOf = (month: string) =>
+      db.entries
+        .filter((e) => e.ym === month && !e.auto && db.types.find((t) => t.id === e.typeId)?.direction === 'income')
+        .reduce((s, e) => s + Math.max(0, e.amount), 0)
+    const lastRecordDateOf = (month: string) =>
+      db.snapshots.filter((s) => s.ym === month).map((s) => s.recordDate).sort().at(-1) || null
+    const dailyAvgOf = (idx: number) => {
+      if (idx <= 0) return null
+      const p = pts[idx]
+      const days = daysBetween(pts[idx - 1].recordDate, lastRecordDateOf(p.ym) || p.recordDate)
+      return computeIntervalStats(p.networth - pts[idx - 1].networth, incomeOf(p.ym), days)
+    }
+    const curStats = dailyAvgOf(i)
+    const prevStats = dailyAvgOf(i - 1)
+    return {
+      ym: curYm,
+      networth: cur.networth,
+      delta: cur.delta,
+      momPct: pctChange(cur.networth, prev ? prev.networth : null),
+      yoyPct: pctChange(cur.networth, yoy ? yoy.networth : null),
+      prevYm: prev ? prev.ym : null,
+      yoyYm: yoy ? yoy.ym : null,
+      days: curStats ? curStats.days : null,
+      dailyAvg: curStats ? curStats.dailyAvg : null,
+      dailyNet: curStats ? curStats.dailyNet : null,
+      estimated: curStats ? curStats.estimated : null,
+      prevDailyAvg: prevStats ? prevStats.dailyAvg : null,
+      dailyAvgDelta: curStats && prevStats ? curStats.dailyAvg - prevStats.dailyAvg : null,
+    }
+  }
   if (p1 === 'stats' && p2 === 'interval') {
     const q = new URLSearchParams(path.split('?')[1] || '')
     const fromYm = q.get('from') || '', toYm = q.get('to') || ''
@@ -763,7 +810,7 @@ export async function localHandle(method: string, path: string, body?: any): Pro
     if (p2 === 'matrix.csv') return { csv: matrixCsv() }
     if (p2 === 'backup' && m === 'GET') {
       return {
-        format: 'suiji-ledger-backup', version: 1, exportedAt: Date.now(),
+        format: 'suiji-ledger-backup', version: 1, exportedAt: Date.now(), exportedAtText: stampText(),
         types: db.types, accounts: db.accounts, snapshots: db.snapshots, entries: db.entries, loans: db.loans,
         settings: Object.entries(db.settings).map(([key, value]) => ({ key, value })),
         meta: { snapshotCount: db.snapshots.length, entryCount: db.entries.length },

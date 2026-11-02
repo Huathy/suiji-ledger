@@ -23,6 +23,8 @@
   --sumbar-bg: #10224a;
   --sumbar-fg-pos: #7ee2b8;
   --sumbar-fg-neg: #ff9d9d;
+  /* PC 卡片统一间距（问题 4） */
+  --pc-gap: 14px;
 }
 html.dark {
   --brand: #60a5fa;
@@ -84,6 +86,10 @@ body {
   max-width: 1080px;
   margin-left: auto;
   margin-right: auto;
+  /* 问题 4：PC 端各卡片统一由 flex gap 控制间距，不再出现 0 间隔 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--pc-gap);
 }
 @media (min-width: 1024px) {
   .app-main { padding-bottom: 40px; }
@@ -97,6 +103,26 @@ body {
   margin: 12px 14px;
 }
 .app-shell.desktop .card { margin: 0; }
+/* PC 下把移动端的外边距交给 flex gap，避免间距叠加/为 0 两种极端（问题 4）。
+   !important 是为了压过个别视图里写死的行内 margin（仅桌面作用域，移动端不受影响）。 */
+.app-shell.desktop .card,
+.app-shell.desktop .netcard,
+.app-shell.desktop .remind,
+.app-shell.desktop .recent-row,
+.app-shell.desktop .sumbar,
+.app-shell.desktop .mb-bar,
+.app-shell.desktop .split-toggle,
+.app-shell.desktop .mb-save,
+.app-shell.desktop .bal-row,
+.app-shell.desktop .grp-label,
+.app-shell.desktop .grp-head,
+.app-shell.desktop .export-actions,
+.app-shell.desktop .range-row,
+.app-shell.desktop .h-top,
+.app-shell.desktop .pc-topbar { margin: 0 !important; }
+/* 分组标题 + 卡片在 PC 上归为一组：块内 6px、块间由外层 gap 控制 */
+.app-shell.desktop .grp-block { display: flex; flex-direction: column; gap: 6px; }
+.app-shell.desktop .grp-head { padding: 4px 4px 0; }
 .sec-t { font-size: 13px; font-weight: 600; color: var(--t1); padding: 2px 2px 8px; display: flex; align-items: center; gap: 6px; }
 .sec-t .hint { font-weight: 400; font-size: 11px; color: var(--t3); margin-left: auto; }
 
@@ -180,3 +206,10 @@ html.dark .remind { background: #332a18; border-color: #55431f; color: #e8b45a; 
 
 /* 空态 */
 .empty-tip { text-align: center; color: var(--t3); font-size: 13px; padding: 40px 20px; line-height: 1.8; }
+
+/* PC 选择器交互提示（问题 1：滚轮/拖动支持见 utils/pc-picker.ts） */
+@media (min-width: 1024px) {
+  .van-picker-column { cursor: grab; }
+  .van-picker-column:active { cursor: grabbing; }
+  .van-picker-column__item { cursor: pointer; }
+}

@@ -22,6 +22,11 @@ export class StatsController {
     return this.svc.typeContribution(limit ? Math.min(60, Number(limit) || 12) : 12)
   }
 
+  @Get('summary')
+  summary(@Query('ym') ym?: string) {
+    return this.svc.summary(ym)
+  }
+
   @Get('interval')
   interval(@Query('from') from: string, @Query('to') to: string) {
     return this.svc.interval(from || '', to || '')

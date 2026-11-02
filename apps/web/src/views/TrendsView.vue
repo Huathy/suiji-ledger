@@ -209,12 +209,18 @@ watch(() => ui.isDark, () => {
       <div v-if="!avgRows.some((r) => r.dailyAvg !== null)" class="empty-tip" style="padding: 20px 10px">
         记录第二个月后，这里会出现每日平均开销的柱状图
       </div>
+    </div>
 
-      <div class="sec-t" style="padding-top: 10px">🥧 资产配置（当前）</div>
+    <!-- 资产配置 -->
+    <div class="card">
+      <div class="sec-t">🥧 资产配置（当前）</div>
       <div ref="allocEl" style="height: 220px" v-show="allocData.length"></div>
       <div v-if="!allocData.length" class="empty-tip" style="padding: 14px 10px">添加账户并平账后，这里显示资产配置</div>
+    </div>
 
-      <div class="sec-t" style="padding-top: 10px">📊 类型累计贡献<span class="hint">近 12 个月大项合计</span></div>
+    <!-- 类型累计贡献 -->
+    <div class="card">
+      <div class="sec-t">📊 类型累计贡献<span class="hint">近 12 个月大项合计</span></div>
       <div v-if="contrib.length">
         <div v-for="c in contrib" :key="c.name" class="ct-row">
           <span style="width: 20px; text-align: center">{{ c.emoji }}</span>

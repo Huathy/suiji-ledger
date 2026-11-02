@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
 import { MonthsService } from '../months/months.service'
 import { BackupService } from '../backup.service'
-import { computeIntervalStats, daysBetween, fromCents } from '../../../../packages/shared/src/index'
+import { computeIntervalStats, daysBetween, fromCents, stampText } from '../../../../packages/shared/src/index'
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
   theme: 'auto', // auto | light | dark
@@ -53,6 +53,7 @@ export class SystemService {
       format: 'suiji-ledger-backup',
       version: 1,
       exportedAt: Date.now(),
+      exportedAtText: stampText(),
       types,
       accounts,
       snapshots,
@@ -205,6 +206,9 @@ export class SystemService {
         ].join(','),
       )
     }
+    // 末尾附导出时间（问题 3）：不污染表头，Excel 打开只是最后一行备注
+    lines.push('')
+    lines.push(`# 导出时间,${stampText()}`)
     return '\uFEFF' + lines.join('\r\n')
   }
 

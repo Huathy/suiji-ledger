@@ -3,13 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NavBar, Popup, Field, CellGroup, Cell, Button, RadioGroup, Radio, Switch, showSuccessToast, showConfirmDialog } from 'vant'
 import { api } from '../api/client'
-import { toCents, fromCents } from '../../../../packages/shared/src/index'
+import { toCents, fromCents, applyOrder, parseOrder, GROUP_ORDER_KEY, GROUP_SORT_MODE_KEY } from '../../../../packages/shared/src/index'
 import { yuan as money } from '../utils/money'
 import { useUiStore } from '../stores/ui'
 
 interface AccountRow {
   id: number; name: string; emoji: string; kind: string; group: string | null
   initBalance: number; inNetWorth: boolean; archived: boolean; note: string | null
+  /** 排序序号（后端 sort 字段，拖拽排序写回，问题 6） */
+  sort: number
   balance: number; prevBalance: number
 }
 interface LoanSummary { borrowIn: number; lendOut: number }
@@ -33,6 +35,14 @@ const liabilityCount = computed(() => accounts.value.filter((a) => !a.archived &
 
 /** 分组：资产按 group 聚合（含小计），负债单列一组 */
 interface GroupSec { name: string; total: number; accounts: AccountRow[] }
+/** 分组排序方式（问题 2）：按小计金额 / 按名称 / 自定义（拖拽） */
+type GroupSortMode = 'total' | 'name' | 'custom'
+const groupSortModes: GroupSortMode[] = ['total', 'name', 'custom']
+const GROUP_SORT_LABEL: Record<GroupSortMode, string> = { total: '按小计金额', name: '按名称', custom: '自定义顺序' }
+const groupSortMode = ref<GroupSortMode>('total')
+const groupOrder = ref<string[]>([])
+const groupSortShow = ref(false)
+
 const assetGroups = computed<GroupSec[]>(() => {
   const map = new Map<string, AccountRow[]>()
   for (const a of accounts.value.filter((x) => !x.archived && x.kind === 'asset')) {
@@ -40,9 +50,14 @@ const assetGroups = computed<GroupSec[]>(() => {
     if (!map.has(g)) map.set(g, [])
     map.get(g)!.push(a)
   }
-  return [...map.entries()]
-    .map(([name, list]) => ({ name, total: list.reduce((s, a) => s + a.balance, 0), accounts: list }))
-    .sort((a, b) => b.total - a.total)
+  const secs = [...map.entries()].map(([name, list]) => ({
+    name, total: list.reduce((s, a) => s + a.balance, 0), accounts: list,
+  }))
+  const mode = groupSortMode.value
+  if (mode === 'name') return secs.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+  if (mode === 'custom') return applyOrder(secs, (s) => s.name, groupOrder.value)
+  // 默认按小计金额降序，同额按名称，保证顺序稳定
+  return secs.sort((a, b) => (b.total - a.total) || a.name.localeCompare(b.name, 'zh-CN'))
 })
 const liabilityGroup = computed<GroupSec>(() => {
   const list = accounts.value.filter((a) => !a.archived && a.kind === 'liability')
@@ -71,12 +86,67 @@ async function loadSettings() {
   try {
     const r = await api<{ settings: Record<string, string> }>('/system/settings')
     customGroups.value = JSON.parse(r.settings.groups || '[]')
+    const mode = r.settings[GROUP_SORT_MODE_KEY]
+    if (mode === 'total' || mode === 'name' || mode === 'custom') groupSortMode.value = mode
+    groupOrder.value = parseOrder(r.settings[GROUP_ORDER_KEY]) || []
   } catch {
     customGroups.value = []
   }
 }
 async function persistGroups() {
   await api('/system/settings', { method: 'PUT', body: { settings: { groups: JSON.stringify(customGroups.value) } } })
+}
+
+/** 分组排序方式 / 自定义顺序持久化（问题 2） */
+async function setGroupSortMode(mode: GroupSortMode) {
+  const displayed = assetGroups.value.map((g) => g.name)
+  groupSortMode.value = mode
+  const settings: Record<string, string> = { [GROUP_SORT_MODE_KEY]: mode }
+  // 只在「自定义」且此前没有保存过顺序时，定格当前显示顺序作为初始自定义顺序；
+  // 其余情况不动 groupOrder，避免切到 按名称/按金额 时把用户调好的自定义顺序清空。
+  if (mode === 'custom' && !groupOrder.value.length) {
+    groupOrder.value = displayed
+    settings[GROUP_ORDER_KEY] = JSON.stringify(displayed)
+  }
+  await api('/system/settings', { method: 'PUT', body: { settings } })
+}
+async function persistGroupOrder() {
+  await api('/system/settings', { method: 'PUT', body: { settings: { [GROUP_ORDER_KEY]: JSON.stringify(groupOrder.value) } } })
+}
+/** 自定义顺序列表 = 已有顺序 + 新增分组（保持未记录的在后面） */
+const groupOrderList = computed(() => applyOrder(assetGroups.value.map((g) => g.name), (n) => n, groupOrder.value))
+function moveGroup(from: number, to: number) {
+  const list = groupOrderList.value.slice()
+  if (to < 0 || to >= list.length || from === to) return
+  const [g] = list.splice(from, 1)
+  list.splice(to, 0, g)
+  groupOrder.value = list
+}
+// 分组拖拽排序（与账户拖拽同一交互）
+const grpDragFrom = ref(-1)
+const grpDragOver = ref(-1)
+function grpDragStart(i: number, e: DragEvent) {
+  grpDragFrom.value = i
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(i))
+  }
+}
+function grpDragEnter(i: number) {
+  if (grpDragFrom.value < 0 || grpDragFrom.value === i) return
+  grpDragOver.value = i
+}
+function grpDrop() {
+  const from = grpDragFrom.value
+  const to = grpDragOver.value
+  if (from >= 0 && to >= 0 && from !== to) {
+    moveGroup(from, to)
+    persistGroupOrder()
+  }
+  grpDragFrom.value = grpDragOver.value = -1
+}
+function grpDragEnd() {
+  grpDragFrom.value = grpDragOver.value = -1
 }
 
 /** 已知分组 = 自定义分组 + 账户实际所在分组（去重） */
@@ -126,15 +196,54 @@ async function moveSelected() {
 
 // 排序
 const sortShow = ref(false)
-const sortable = computed(() => accounts.value.filter((a) => !a.archived))
+const sortable = computed(() => accounts.value.filter((a) => !a.archived).slice().sort((x, y) => x.sort - y.sort || x.id - y.id))
 async function moveAcc(a: AccountRow, dir: -1 | 1) {
-  const list = sortable.value.slice().sort((x, y) => x.sort - y.sort)
+  const list = sortable.value.slice()
   const i = list.findIndex((x) => x.id === a.id)
   const j = i + dir
   if (j < 0 || j >= list.length) return
   await api('/accounts/' + list[i].id, { method: 'PATCH', body: { sort: list[j].sort } })
   await api('/accounts/' + list[j].id, { method: 'PATCH', body: { sort: list[i].sort } })
   await load()
+}
+
+/** 拖拽排序（问题 6）：拖动句柄换序，松手后按新顺序整体回写 sort */
+const dragFrom = ref(-1)
+const dragOverIdx = ref(-1)
+function onDragStart(i: number, e: DragEvent) {
+  dragFrom.value = i
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(i))
+  }
+}
+function onDragEnter(i: number) {
+  if (dragFrom.value < 0 || dragFrom.value === i) return
+  dragOverIdx.value = i
+}
+function onDropRow() {
+  const from = dragFrom.value
+  const to = dragOverIdx.value
+  if (from >= 0 && to >= 0 && from !== to) commitDragOrder(from, to)
+  dragFrom.value = dragOverIdx.value = -1
+}
+function onDragEnd() {
+  dragFrom.value = dragOverIdx.value = -1
+}
+async function commitDragOrder(from: number, to: number) {
+  const list = sortable.value.slice()
+  const [moved] = list.splice(from, 1)
+  list.splice(to, 0, moved)
+  // 乐观更新本地顺序，随后整体回写 sort（0..n-1）
+  accounts.value = accounts.value.map((a) => {
+    const idx = list.findIndex((x) => x.id === a.id)
+    return idx >= 0 ? { ...a, sort: idx } : a
+  })
+  try {
+    await Promise.all(list.map((a, idx) => (a.sort === idx ? Promise.resolve() : api('/accounts/' + a.id, { method: 'PATCH', body: { sort: idx } }))))
+  } finally {
+    await load()
+  }
 }
 // 分组重命名
 const renameShow = ref(false)
@@ -260,8 +369,16 @@ async function toggleArchive(a: AccountRow) {
     </div>
 
     <template v-if="loaded">
+      <!-- 分组排序方式（问题 2） -->
+      <div class="grp-sortbar">
+        <span class="grp-sort-label">分组排序</span>
+        <button v-for="m in groupSortModes" :key="m" type="button"
+          class="grp-sort-pill" :class="{ on: groupSortMode === m }" @click="setGroupSortMode(m)">{{ GROUP_SORT_LABEL[m] }}</button>
+        <button v-if="groupSortMode === 'custom'" type="button" class="grp-sort-pill" @click="groupSortShow = true">调整分组顺序…</button>
+      </div>
+
       <!-- 资产分组（小计 + 折叠） -->
-      <div v-for="g in assetGroups" :key="g.name">
+      <div v-for="g in assetGroups" :key="g.name" class="grp-block">
         <div class="grp-head" @click="toggleGroup(g.name)">
           <span>{{ g.name }}</span>
           <i class="grp-edit" @click.stop="openRename(g.name)">✎</i>
@@ -285,27 +402,29 @@ async function toggleArchive(a: AccountRow) {
 
       <!-- 负债组 -->
       <template v-if="liabilityGroup.accounts.length">
-        <div class="grp-head" @click="toggleGroup('负债')">
-          <span>负债</span>
-          <span style="margin-left: auto; display: flex; align-items: center; gap: 6px">
-            <b class="num m-exp">{{ money(liabilityGroup.total) }}</b>
-            <i :class="['chev', collapsed['负债'] ? 'rot' : '']">▼</i>
-          </span>
-        </div>
-        <div class="card" style="padding: 4px 14px" v-show="!collapsed['负债']">
-          <div v-for="a in liabilityGroup.accounts" :key="a.id" class="row-line" style="cursor: pointer" @click="router.push('/accounts/' + a.id)">
-            <span class="cicon">{{ a.emoji }}</span>
-            <div style="flex: 1">
-              <div style="font-size: 13.5px; color: var(--t1)">{{ a.name }} <span v-if="!a.inNetWorth" class="badge-n">不计入</span></div>
-              <div style="font-size: 10.5px; color: var(--t3)">当前欠款</div>
+        <div class="grp-block">
+          <div class="grp-head" @click="toggleGroup('负债')">
+            <span>负债</span>
+            <span style="margin-left: auto; display: flex; align-items: center; gap: 6px">
+              <b class="num m-exp">{{ money(liabilityGroup.total) }}</b>
+              <i :class="['chev', collapsed['负债'] ? 'rot' : '']">▼</i>
+            </span>
+          </div>
+          <div class="card" style="padding: 4px 14px" v-show="!collapsed['负债']">
+            <div v-for="a in liabilityGroup.accounts" :key="a.id" class="row-line" style="cursor: pointer" @click="router.push('/accounts/' + a.id)">
+              <span class="cicon">{{ a.emoji }}</span>
+              <div style="flex: 1">
+                <div style="font-size: 13.5px; color: var(--t1)">{{ a.name }} <span v-if="!a.inNetWorth" class="badge-n">不计入</span></div>
+                <div style="font-size: 10.5px; color: var(--t3)">当前欠款</div>
+              </div>
+              <b class="num m-exp" style="font-size: 14px">{{ money(a.balance) }}</b>
             </div>
-            <b class="num m-exp" style="font-size: 14px">{{ money(a.balance) }}</b>
           </div>
         </div>
       </template>
 
       <!-- 已归档 -->
-      <div v-if="accounts.some((a) => a.archived)">
+      <div v-if="accounts.some((a) => a.archived)" class="grp-block">
         <div class="grp-head" @click="toggleGroup('已归档')">
           <span>已归档（历史保留）</span><i :class="['chev', collapsed['已归档'] ? '' : 'rot']">▼</i>
         </div>
@@ -323,7 +442,7 @@ async function toggleArchive(a: AccountRow) {
         <Button size="small" round type="primary" style="margin-left: auto" @click="moveTarget = knownGroups[0] || ''; moveNewName = ''; moveShow = true">移入分组…</Button>
         <Button size="small" round plain @click="selected = new Set()">取消选择</Button>
       </div>
-      <div style="display: flex; gap: 10px; margin: 14px 16px; flex-wrap: wrap">
+      <div class="acct-actions">
         <Button block round plain type="primary" @click="openAdd">＋ 添加账户</Button>
         <Button block round plain @click="newGroupShow = true">🗂 新建分组</Button>
         <Button block round plain @click="sortShow = true">⇅ 排序</Button>
@@ -367,16 +486,35 @@ async function toggleArchive(a: AccountRow) {
         </div>
       </Popup>
       <Popup v-model:show="sortShow" position="bottom" round style="padding: 16px">
-        <div style="font-weight: 600; margin-bottom: 8px">账户排序（上/下移动）</div>
+        <div style="font-weight: 600; margin-bottom: 2px">账户排序</div>
+        <div style="font-size: 11px; color: var(--t3); margin-bottom: 8px">按住 ⠿ 拖动换序（PC 也可直接拖），或用 ↑↓ 微调</div>
         <div class="card" style="padding: 4px 14px; margin: 0">
-          <div v-for="(a, i) in sortable" :key="a.id" class="row-line">
+          <div v-for="(a, i) in sortable" :key="a.id" class="row-line sort-row"
+            :class="{ 'drag-over': dragOverIdx === i && dragFrom !== i, 'dragging': dragFrom === i }"
+            @dragover.prevent @dragenter.prevent="onDragEnter(i)" @drop.prevent="onDropRow">
+            <span class="drag-handle" draggable="true" @dragstart="onDragStart(i, $event)" @dragend="onDragEnd" title="拖动排序">⠿</span>
             <span class="cicon" style="width: 30px; height: 30px; font-size: 14px">{{ a.emoji }}</span>
-            <span style="flex: 1; font-size: 13px">{{ a.name }}</span>
+            <span style="flex: 1; font-size: 13px">{{ a.name }} <span style="color: var(--t3); font-size: 10px">{{ a.group || '未分组' }}</span></span>
             <a style="cursor: pointer; color: var(--brand); margin: 0 8px" @click="i > 0 && moveAcc(a, -1)">↑</a>
             <a style="cursor: pointer; color: var(--brand)" @click="i < sortable.length - 1 && moveAcc(a, 1)">↓</a>
           </div>
         </div>
         <Button block round style="margin-top: 12px" @click="sortShow = false">完成</Button>
+      </Popup>
+      <Popup v-model:show="groupSortShow" position="bottom" round style="padding: 16px">
+        <div style="font-weight: 600; margin-bottom: 2px">分组顺序（自定义）</div>
+        <div style="font-size: 11px; color: var(--t3); margin-bottom: 8px">按住 ⠿ 拖动调整分组先后，松手即保存</div>
+        <div class="card" style="padding: 4px 14px; margin: 0">
+          <div v-for="(g, i) in groupOrderList" :key="g" class="row-line sort-row"
+            :class="{ 'drag-over': grpDragOver === i && grpDragFrom !== i, 'dragging': grpDragFrom === i }"
+            @dragover.prevent @dragenter.prevent="grpDragEnter(i)" @drop.prevent="grpDrop">
+            <span class="drag-handle" draggable="true" @dragstart="grpDragStart(i, $event)" @dragend="grpDragEnd" title="拖动排序">⠿</span>
+            <span style="flex: 1; font-size: 13px">{{ g }}</span>
+            <a style="cursor: pointer; color: var(--brand); margin: 0 8px" @click="i > 0 && (moveGroup(i, i - 1), persistGroupOrder())">↑</a>
+            <a style="cursor: pointer; color: var(--brand)" @click="i < groupOrderList.length - 1 && (moveGroup(i, i + 1), persistGroupOrder())">↓</a>
+          </div>
+        </div>
+        <Button block round style="margin-top: 12px" @click="groupSortShow = false">完成</Button>
       </Popup>
       <Popup v-model:show="renameShow" position="bottom" round style="padding: 16px">
         <div style="font-weight: 600; margin-bottom: 4px">重命名分组「{{ renameFrom }}」</div>
@@ -435,6 +573,29 @@ async function toggleArchive(a: AccountRow) {
   display: flex; align-items: center; padding: 14px 18px 6px;
   font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer;
 }
+/* 分组排序条（问题 2） */
+.grp-sortbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 2px 18px 0; }
+.grp-sort-label { font-size: 11px; color: var(--t3); }
+.grp-sort-pill {
+  font-size: 11px; padding: 5px 11px; border-radius: 13px; min-height: 28px;
+  background: var(--surface); color: var(--t2); cursor: pointer; border: none; font-family: inherit;
+}
+.grp-sort-pill.on { background: var(--brand); color: #fff; font-weight: 600; }
+html.dark .grp-sort-pill.on { color: #0b1220; }
+/* 移动端：分组标题与卡片紧贴成一组，PC 由 .grp-block 的 gap 控制 */
+.grp-block { display: flex; flex-direction: column; }
+/* 拖拽排序（问题 6） */
+.sort-row { transition: background 0.12s, opacity 0.12s; }
+.sort-row.dragging { opacity: 0.45; }
+.sort-row.drag-over { background: var(--focus-bg); box-shadow: inset 0 2px 0 var(--brand); }
+.drag-handle {
+  width: 26px; text-align: center; color: var(--t3); cursor: grab; font-size: 15px;
+  user-select: none; flex-shrink: 0; padding: 4px 0;
+}
+.drag-handle:active { cursor: grabbing; color: var(--brand); }
+/* 操作按钮行 */
+.acct-actions { display: flex; gap: 10px; margin: 14px 16px; flex-wrap: wrap; }
+.app-shell.desktop .acct-actions { margin: 0; }
 .chev { font-style: normal; font-size: 9px; color: var(--t3); transition: transform 0.2s; display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; }
 .chev.rot { transform: rotate(-90deg); }
 .badge-n { font-size: 9px; color: var(--t3); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 4px; }

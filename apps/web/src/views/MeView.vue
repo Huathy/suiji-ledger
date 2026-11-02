@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NavBar, Field, CellGroup, Button, Dialog, showSuccessToast, showConfirmDialog, RadioGroup, Radio, Switch } from 'vant'
 import { api, downloadFile, OFFLINE, saveTextFile, pickTextFile } from '../api/client'
+import { fileStamp, stampText } from '../../../../packages/shared/src/index'
 import { useUiStore } from '../stores/ui'
 import { useAuthStore } from '../stores/auth'
 
@@ -60,13 +61,16 @@ async function exportXlsx() {
     r.delta === null ? '' : Number((r.delta / 100).toFixed(2)),
     r.dailyAvg === null ? '' : Number((r.dailyAvg / 100).toFixed(2)),
   ])
+  // 末行附导出时间（问题 3）
+  rows.push([])
+  rows.push([`导出时间 ${stampText()}`])
   const ws = XLSX.utils.aoa_to_sheet([head, ...rows])
   ws['!cols'] = head.map((h) => ({ wch: Math.max(10, String(h).length + 4) }))
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, '资产负债总表')
   const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
   const { saveTextFile } = await import('../api/client')
-  const where = await saveTextFile(`suiji-ledger-总表-${new Date().toISOString().slice(0, 10)}.xlsx`, new Blob([out]))
+  const where = await saveTextFile(`suiji-ledger-总表-${fileStamp()}.xlsx`, new Blob([out]))
   showSuccessToast(typeof where === 'string' && where.startsWith('已保存') ? where : '已导出')
 }
 
@@ -83,7 +87,8 @@ async function changePwd() {
 }
 
 async function exportBackup() {
-  const name = `suiji-ledger-backup-${new Date().toISOString().slice(0, 10)}.json`
+  // 文件名带年月日时分秒（问题 3），避免同日多次导出互相覆盖
+  const name = `suiji-ledger-backup-${fileStamp()}.json`
   if (OFFLINE) {
     const data = await api<any>('/system/backup')
     const where = await saveTextFile(name, JSON.stringify(data, null, 2))
@@ -93,7 +98,7 @@ async function exportBackup() {
   await downloadFile('/system/backup', name)
 }
 async function exportCsv() {
-  await downloadFile('/system/matrix.csv', 'suiji-ledger-balance-sheet.csv')
+  await downloadFile('/system/matrix.csv', `suiji-ledger-balance-sheet-${fileStamp()}.csv`)
 }
 
 /** 离线模式：走系统文件选择器；服务端模式：网页文件输入 */

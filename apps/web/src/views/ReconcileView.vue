@@ -334,7 +334,9 @@ async function onBack() {
       </div>
       <div class="card" v-if="loaded">
         <div class="sec-t">
-          {{ ym }} · 记录日
+          <!-- PC 也可切月份：原先只有移动端 .mb-pick 有入口，PC 只能绕道月度详情页 -->
+          <span class="month-pick" @click="monthPickShow = true">{{ ym }} ▾</span>
+          <span>· 记录日</span>
           <span class="num date-pick" @click="datePickShow = true">📅 {{ recordDate }}</span>
           <span class="hint">回车跳下一行 · Ctrl+S 保存</span>
         </div>
@@ -503,6 +505,9 @@ async function onBack() {
 .edit-badge { font-size: 10.5px; color: var(--warn); background: rgba(255, 136, 0, 0.12); border-radius: 6px; padding: 3px 8px; }
 .new-badge { font-size: 10.5px; color: var(--brand); background: rgba(59, 130, 246, 0.12); border-radius: 6px; padding: 3px 8px; }
 .date-pick { cursor: pointer; color: var(--brand); }
+/* PC 平账页月份切换入口（问题 1：日期下拉筛选在 PC 也要能用） */
+.month-pick { cursor: pointer; color: var(--brand); font-weight: 700; padding: 4px 2px; }
+.month-pick:hover { text-decoration: underline; }
 .days-warn { font-size: 11px; color: var(--expense); font-weight: 600; }
 /* 汇总条 */
 .sumbar {

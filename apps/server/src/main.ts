@@ -24,6 +24,13 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: true })
   app.setGlobalPrefix('api')
 
+  // API 响应一律禁止缓存：设置/统计等是易变的读回数据，
+  // 浏览器（含 Electron）对 200 GET 会启发式缓存，导致 PUT 设置后读回旧值。
+  app.use('/api', (req: any, res: any, next: any) => {
+    res.setHeader('Cache-Control', 'no-store')
+    next()
+  })
+
   // 生产模式：托管前端构建产物 + SPA 回退
   const dist = path.join(ROOT, 'apps', 'web', 'dist')
   if (fs.existsSync(dist)) {

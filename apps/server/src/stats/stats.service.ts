@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { MonthsService } from '../months/months.service'
 import { PrismaService } from '../prisma.service'
-import { computeIntervalStats, daysBetween, YM_RE } from '../../../../packages/shared/src/index'
+import { computeIntervalStats, daysBetween, pctChange, yoyYm, YM_RE } from '../../../../packages/shared/src/index'
 
 @Injectable()
 export class StatsService {
@@ -82,6 +82,62 @@ export class StatsService {
       })
       .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
     return { months: yms, items }
+  }
+
+  /**
+   * 总览摘要（问题 5 · PC 端）：本月相对上月/去年同月的增长率、日均开销增减。
+   * 数据源与 /stats/daily-avg 同口径，避免前端二次拼公式。
+   */
+  async summary(ym?: string) {
+    const points = await this.months.recordPoints() // 近的在前
+    const asc = points.slice().reverse()
+    const curYm = ym && YM_RE.test(ym) ? ym : asc.at(-1)?.ym
+    if (!curYm) return { ym: null }
+    const i = asc.findIndex((p) => p.ym === curYm)
+    if (i < 0) return { ym: null } // 该月没有记录点：按「无数据」返回，避免越界取值
+    const cur = asc[i]
+    const prev = i > 0 ? asc[i - 1] : null
+    const yoy = asc.find((p) => p.ym === yoyYm(curYm)) || null
+
+    const [entries, types] = await Promise.all([
+      this.prisma.changeEntry.findMany(),
+      this.prisma.recordType.findMany(),
+    ])
+    const tdir = new Map(types.map((t) => [t.id, t.direction]))
+    const incomeOf = (month: string) =>
+      entries
+        .filter((e) => e.ym === month && !e.auto && tdir.get(e.typeId) === 'income')
+        .reduce((s, e) => s + Math.max(0, e.amount), 0)
+    const snaps = await this.prisma.monthlySnapshot.findMany({ orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
+    const lastRecordDateOf = (month: string) =>
+      snaps.filter((s) => s.ym === month).map((s) => s.recordDate).sort().at(-1) || null
+
+    const dailyAvgOf = (idx: number) => {
+      if (idx <= 0) return null
+      const p = asc[idx]
+      const prevDate = asc[idx - 1].recordDate
+      const curDate = lastRecordDateOf(p.ym) || p.recordDate
+      const days = daysBetween(prevDate, curDate)
+      return computeIntervalStats(p.networth - asc[idx - 1].networth, incomeOf(p.ym), days)
+    }
+    const curStats = dailyAvgOf(i)
+    const prevStats = dailyAvgOf(i - 1)
+
+    return {
+      ym: curYm,
+      networth: cur.networth,
+      delta: cur.delta,
+      momPct: pctChange(cur.networth, prev ? prev.networth : null),
+      yoyPct: pctChange(cur.networth, yoy ? yoy.networth : null),
+      prevYm: prev ? prev.ym : null,
+      yoyYm: yoy ? yoy.ym : null,
+      days: curStats ? curStats.days : null,
+      dailyAvg: curStats ? curStats.dailyAvg : null,
+      dailyNet: curStats ? curStats.dailyNet : null,
+      estimated: curStats ? curStats.estimated : null,
+      prevDailyAvg: prevStats ? prevStats.dailyAvg : null,
+      dailyAvgDelta: curStats && prevStats ? curStats.dailyAvg - prevStats.dailyAvg : null,
+    }
   }
 
   /** 区间分析器：任选两个记录点月份 */
