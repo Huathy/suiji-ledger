@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard'
 import { MonthsService } from './months.service'
+import { parseTimeSortDir } from '../../../../packages/shared/src/index'
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -8,8 +9,8 @@ export class MonthsController {
   constructor(private svc: MonthsService) {}
 
   @Get('months')
-  months(@Query('limit') limit?: string) {
-    return this.svc.months(limit ? Math.min(120, Number(limit) || 60) : 60)
+  months(@Query('limit') limit?: string, @Query('dir') dir?: string) {
+    return this.svc.months(limit ? Math.min(120, Number(limit) || 60) : 60, parseTimeSortDir(dir))
   }
 
   @Get('month/:ym')
@@ -23,8 +24,8 @@ export class MonthsController {
   }
 
   @Get('search')
-  search(@Query('q') q: string, @Query('minYuan') minYuan: string, @Query('maxYuan') maxYuan: string) {
-    return this.svc.search(q || '', minYuan ? Number(minYuan) : null, maxYuan ? Number(maxYuan) : null)
+  search(@Query('q') q: string, @Query('minYuan') minYuan: string, @Query('maxYuan') maxYuan: string, @Query('dir') dir?: string) {
+    return this.svc.search(q || '', minYuan ? Number(minYuan) : null, maxYuan ? Number(maxYuan) : null, parseTimeSortDir(dir))
   }
 
   @Post('reconcile')

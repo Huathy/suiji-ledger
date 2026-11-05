@@ -1,6 +1,6 @@
 {
   "name": "suiji-ledger-desktop",
-  "version": "0.3.7",
+  "version": "0.3.12",
   "private": true,
   "main": "main.js",
   "author": "Suiji Ledger",
@@ -28,6 +28,7 @@
       "oneClick": true,
       "perMachine": false,
       "deleteAppDataOnUninstall": false,
+      "include": "nsis/customUninstaller.nsh",
       "artifactName": "SuijiLedger-Setup-${version}.${ext}"
     },
     "portable": {

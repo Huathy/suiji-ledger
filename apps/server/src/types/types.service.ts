@@ -1,17 +1,19 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
+import { RecordMetaService } from '../sync/record-meta.service'
 
 const DIRECTIONS = ['income', 'expense', 'neutral']
 
 @Injectable()
 export class TypesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private meta: RecordMetaService) {}
 
   async list() {
     const types = await this.prisma.recordType.findMany({
+      where: { deleted: false },
       orderBy: [{ builtin: 'desc' }, { sort: 'asc' }, { id: 'asc' }],
     })
-    const counts = await this.prisma.changeEntry.groupBy({ by: ['typeId'], _count: true })
+    const counts = await this.prisma.changeEntry.groupBy({ by: ['typeId'], where: { deleted: false }, _count: true })
     const cmap = new Map(counts.map((c) => [c.typeId, c._count]))
     return types.map((t) => ({ ...t, usageCount: cmap.get(t.id) ?? 0 }))
   }
@@ -21,8 +23,10 @@ export class TypesService {
     if (!name) throw new BadRequestException('请填写类型名称')
     if (!DIRECTIONS.includes(dto.direction)) throw new BadRequestException('收支方向不合法')
     const max = await this.prisma.recordType.aggregate({ _max: { sort: true } })
+    const stamp = await this.meta.stamp()
     return this.prisma.recordType.create({
       data: {
+        ...stamp,
         name: name.slice(0, 20),
         emoji: String(dto.emoji || '🏷').slice(0, 8),
         color: dto.color ? String(dto.color).slice(0, 20) : null,
@@ -49,7 +53,7 @@ export class TypesService {
       if (!DIRECTIONS.includes(dto.direction)) throw new BadRequestException('收支方向不合法')
       data.direction = dto.direction
     }
-    return this.prisma.recordType.update({ where: { id }, data })
+    return this.prisma.recordType.update({ where: { id }, data: { ...data, ...(await this.meta.bump(t)) } })
   }
 
   /** 删除自定义类型：历史条目回退为「平账」，数据不丢 */
@@ -57,9 +61,13 @@ export class TypesService {
     const t = await this.prisma.recordType.findUnique({ where: { id } })
     if (!t) throw new NotFoundException('类型不存在')
     if (t.builtin) throw new BadRequestException('内置「平账」类型不可删除')
-    const builtin = await this.prisma.recordType.findFirst({ where: { builtin: true } })
-    await this.prisma.changeEntry.updateMany({ where: { typeId: id }, data: { typeId: builtin!.id } })
-    await this.prisma.recordType.delete({ where: { id } })
+    const builtin = await this.prisma.recordType.findFirst({ where: { builtin: true, deleted: false } })
+    // 回退条目的类型变了，rev 必须前进，否则对端看不出这些条目变过
+    const affected = await this.prisma.changeEntry.findMany({ where: { typeId: id, deleted: false } })
+    for (const e of affected) {
+      await this.prisma.changeEntry.update({ where: { id: e.id }, data: { typeId: builtin!.id, ...(await this.meta.bump(e)) } })
+    }
+    await this.prisma.recordType.update({ where: { id }, data: await this.meta.tombstone(t) })
     return { ok: true }
   }
 }

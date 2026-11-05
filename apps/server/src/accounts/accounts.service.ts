@@ -2,11 +2,17 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma.service'
 import { MonthsService } from '../months/months.service'
 import { BackupService } from '../backup.service'
+import { RecordMetaService } from '../sync/record-meta.service'
 import { todayYMD } from '../../../../packages/shared/src/index'
 
 @Injectable()
 export class AccountsService {
-  constructor(private prisma: PrismaService, private months: MonthsService, private backup: BackupService) {}
+  constructor(
+    private prisma: PrismaService,
+    private months: MonthsService,
+    private backup: BackupService,
+    private meta: RecordMetaService,
+  ) {}
 
   /**
    * 单账户快速调整余额（随时，不必等月末平账）：
@@ -37,19 +43,30 @@ export class AccountsService {
     const delta = balance - oldCurrent
 
     if (existing) {
-      await this.prisma.monthlySnapshot.update({
-        where: { id: existing.id },
-        data: { balance, recordDate },
-      })
+      if (existing.balance !== balance || existing.recordDate !== recordDate) {
+        await this.prisma.monthlySnapshot.update({
+          where: { id: existing.id },
+          data: { balance, recordDate, ...(await this.meta.bump(existing)) },
+        })
+      }
     } else {
+      const stamp = await this.meta.stamp()
       await this.prisma.monthlySnapshot.create({
-        data: { ym, accountId: id, balance, recordDate, note: '快速调整' },
+        data: {
+          ...stamp,
+          uid: acc.uid ? `${ym}__${acc.uid}` : stamp.uid,
+          ym, accountId: id, balance, recordDate, note: '快速调整',
+        },
       })
     }
     if (delta !== 0) {
-      const builtin = await this.prisma.recordType.findFirst({ where: { builtin: true } })
+      const builtin = await this.prisma.recordType.findFirst({ where: { builtin: true, deleted: false } })
+      const stamp = await this.meta.stamp()
       await this.prisma.changeEntry.create({
-        data: { ym, typeId: builtin!.id, amount: delta, note, accountId: id, auto: false },
+        data: {
+          ...stamp,
+          ym, typeId: builtin!.id, amount: delta, note, accountId: id, auto: false,
+        },
       })
     }
     await this.months.recomputeAuto(ym)
@@ -59,8 +76,11 @@ export class AccountsService {
 
   /** 列表：附当前余额（最近快照，否则初始余额）与最近两次余额 */
   async list() {
-    const accounts = await this.prisma.account.findMany({ orderBy: [{ archived: 'asc' }, { sort: 'asc' }, { id: 'asc' }] })
-    const snaps = await this.prisma.monthlySnapshot.findMany({ orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
+    const accounts = await this.prisma.account.findMany({
+      where: { deleted: false },
+      orderBy: [{ archived: 'asc' }, { sort: 'asc' }, { id: 'asc' }],
+    })
+    const snaps = await this.prisma.monthlySnapshot.findMany({ where: { deleted: false }, orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
     const lastBy = new Map<number, { ym: string; balance: number; prev: number }>()
     for (const s of snaps) {
       const cur = lastBy.get(s.accountId)
@@ -84,8 +104,10 @@ export class AccountsService {
     const balance = Number(dto.initBalance)
     if (!Number.isInteger(balance) || balance < 0) throw new BadRequestException('初始余额不合法（分）')
     const max = await this.prisma.account.aggregate({ _max: { sort: true } })
+    const stamp = await this.meta.stamp()
     return this.prisma.account.create({
       data: {
+        ...stamp,
         name,
         emoji: String(dto.emoji || '🏦').slice(0, 8),
         kind: dto.kind,
@@ -110,18 +132,19 @@ export class AccountsService {
     if (dto.note !== undefined) data.note = dto.note ? String(dto.note).slice(0, 200) : null
     if (dto.archived !== undefined) data.archived = !!dto.archived
     if (dto.sort !== undefined) data.sort = Number(dto.sort)
-    return this.prisma.account.update({ where: { id }, data })
+    return this.prisma.account.update({ where: { id }, data: { ...data, ...(await this.meta.bump(account)) } })
   }
 
   async remove(id: number) {
     const acc = await this.prisma.account.findUnique({ where: { id } })
     if (!acc) throw new NotFoundException('账户不存在')
-    const snaps = await this.prisma.monthlySnapshot.count({ where: { accountId: id } })
+    const snaps = await this.prisma.monthlySnapshot.count({ where: { accountId: id, deleted: false } })
     if (snaps > 0) throw new BadRequestException('该账户已有历史快照，请改用「归档」保留历史')
     await this.prisma.deletedItem.create({
       data: { kind: 'account', summary: `账户 ${acc.name}`, payload: JSON.stringify(acc), deletedAt: Math.floor(Date.now() / 1000) },
     })
-    await this.prisma.account.delete({ where: { id } })
+    // 墓碑（D3）：物理删会让对端把"我删了"读成"文件消失"，冲突绕开驱动
+    await this.prisma.account.update({ where: { id }, data: await this.meta.tombstone(acc) })
     await this.backup.snapshot('删除账户 ' + acc.name)
     return { ok: true }
   }

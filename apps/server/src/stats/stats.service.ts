@@ -19,11 +19,11 @@ export class StatsService {
     const points = await this.months.recordPoints()
     const asc = points.slice().reverse()
     const [accounts, entries, allTypes] = await Promise.all([
-      this.prisma.account.findMany(),
-      this.prisma.changeEntry.findMany(),
-      this.prisma.recordType.findMany(),
+      this.prisma.account.findMany({ where: { deleted: false } }),
+      this.prisma.changeEntry.findMany({ where: { deleted: false } }),
+      this.prisma.recordType.findMany({ where: { deleted: false } }),
     ])
-    const snaps = await this.prisma.monthlySnapshot.findMany({ orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
+    const snaps = await this.prisma.monthlySnapshot.findMany({ where: { deleted: false }, orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
     const tdir = new Map(allTypes.map((t) => [t.id, t.direction]))
     const out: any[] = []
     for (let i = 0; i < asc.length; i++) {
@@ -61,8 +61,8 @@ export class StatsService {
     const yms = points.slice(0, limit).map((p) => p.ym)
     if (yms.length === 0) return { months: yms, items: [] }
     const [entries, types] = await Promise.all([
-      this.prisma.changeEntry.findMany({ where: { ym: { in: yms } } }),
-      this.prisma.recordType.findMany(),
+      this.prisma.changeEntry.findMany({ where: { ym: { in: yms }, deleted: false } }),
+      this.prisma.recordType.findMany({ where: { deleted: false } }),
     ])
     const tmap = new Map(types.map((t) => [t.id, t]))
     const sums = new Map<number, number>()
@@ -100,15 +100,15 @@ export class StatsService {
     const yoy = asc.find((p) => p.ym === yoyYm(curYm)) || null
 
     const [entries, types] = await Promise.all([
-      this.prisma.changeEntry.findMany(),
-      this.prisma.recordType.findMany(),
+      this.prisma.changeEntry.findMany({ where: { deleted: false } }),
+      this.prisma.recordType.findMany({ where: { deleted: false } }),
     ])
     const tdir = new Map(types.map((t) => [t.id, t.direction]))
     const incomeOf = (month: string) =>
       entries
         .filter((e) => e.ym === month && !e.auto && tdir.get(e.typeId) === 'income')
         .reduce((s, e) => s + Math.max(0, e.amount), 0)
-    const snaps = await this.prisma.monthlySnapshot.findMany({ orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
+    const snaps = await this.prisma.monthlySnapshot.findMany({ where: { deleted: false }, orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
     const lastRecordDateOf = (month: string) =>
       snaps.filter((s) => s.ym === month).map((s) => s.recordDate).sort().at(-1) || null
 
@@ -149,7 +149,7 @@ export class StatsService {
     const to = asc.find((p) => p.ym === toYm)
     if (!from || !to) throw new BadRequestException('所选月份没有记录点，请先平账')
     if (to.ym <= from.ym) throw new BadRequestException('结束月份需晚于起始月份')
-    const entries = await this.prisma.changeEntry.findMany({ where: { ym: { gte: from.ym, lte: to.ym } } })
+    const entries = await this.prisma.changeEntry.findMany({ where: { ym: { gte: from.ym, lte: to.ym }, deleted: false } })
     const types = await this.prisma.recordType.findMany()
     const tdir = new Map(types.map((t) => [t.id, t.direction]))
     const incomeTotal = entries

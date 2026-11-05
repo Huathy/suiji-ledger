@@ -8,11 +8,12 @@ import { StatsModule } from './stats/stats.module'
 import { SystemModule } from './system/system.module'
 import { BackupService } from './backup.service'
 import { RecycleModule } from './recycle/recycle.module'
+import { SyncModule } from './sync/sync.module'
 
 @Global()
 @Module({
   providers: [PrismaService, BackupService],
   exports: [PrismaService, BackupService],
-  imports: [AuthModule, AccountsModule, TypesModule, MonthsModule, StatsModule, SystemModule, RecycleModule],
+  imports: [AuthModule, AccountsModule, TypesModule, MonthsModule, StatsModule, SystemModule, RecycleModule, SyncModule],
 })
 export class AppModule {}

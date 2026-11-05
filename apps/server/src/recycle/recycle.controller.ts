@@ -1,6 +1,7 @@
-import { Controller, Delete, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common'
+import { Controller, Delete, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard'
 import { RecycleService } from './recycle.service'
+import { parseTimeSortDir } from '../../../../packages/shared/src/index'
 
 @Controller('recycle')
 @UseGuards(AuthGuard)
@@ -8,8 +9,8 @@ export class RecycleController {
   constructor(private svc: RecycleService) {}
 
   @Get()
-  list() {
-    return this.svc.list()
+  list(@Query('dir') dir?: string) {
+    return this.svc.list(parseTimeSortDir(dir))
   }
 
   @Post(':id/restore')

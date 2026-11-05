@@ -1,6 +1,8 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
 import { BackupService } from '../backup.service'
+import { RecordMetaService } from '../sync/record-meta.service'
+import type { TimeSortDir } from '../../../../packages/shared/src/index'
 
 /**
  * 借入借出台账：in = 借入(我欠人) / out = 借出(人欠我)。
@@ -8,10 +10,11 @@ import { BackupService } from '../backup.service'
  */
 @Injectable()
 export class LoansService {
-  constructor(private prisma: PrismaService, private backup: BackupService) {}
+  constructor(private prisma: PrismaService, private backup: BackupService, private meta: RecordMetaService) {}
 
-  async list() {
-    const loans = await this.prisma.loan.findMany({ orderBy: [{ id: 'desc' }] })
+  /** 列表：dir='desc'（默认）按发生日期倒序（新的在前），'asc' 按日期顺序（最早的在前） */
+  async list(dir: TimeSortDir = 'desc') {
+    const loans = await this.prisma.loan.findMany({ where: { deleted: false }, orderBy: [{ date: dir }, { id: dir }] })
     const view = loans.map((l) => ({
       ...l,
       remaining: l.amount - l.settledAmount,
@@ -28,8 +31,10 @@ export class LoansService {
     const counterparty = String(dto?.counterparty || '').trim()
     if (!counterparty) throw new BadRequestException('请填写对方名称')
     if (!Number.isInteger(dto?.amount) || dto.amount <= 0) throw new BadRequestException('金额不合法（分）')
+    const stamp = await this.meta.stamp()
     return this.prisma.loan.create({
       data: {
+        ...stamp,
         direction,
         counterparty: counterparty.slice(0, 30),
         amount: dto.amount,
@@ -49,7 +54,7 @@ export class LoansService {
     if (!loan) throw new NotFoundException('借还记录不存在')
     if (!Number.isInteger(dto?.amount) || dto.amount <= 0) throw new BadRequestException('金额不合法（分）')
     const settled = Math.min(loan.amount, loan.settledAmount + dto.amount)
-    await this.prisma.loan.update({ where: { id }, data: { settledAmount: settled } })
+    await this.prisma.loan.update({ where: { id }, data: { settledAmount: settled, ...(await this.meta.bump(loan)) } })
     await this.backup.snapshot('借还进度 ' + loan.counterparty)
     return this.list()
   }
@@ -73,7 +78,7 @@ export class LoansService {
     if (dto.dueDate !== undefined) data.dueDate = /^\d{4}-\d{2}-\d{2}$/.test(dto.dueDate || '') ? dto.dueDate : null
     if (dto.accountId !== undefined) data.accountId = Number.isInteger(dto.accountId) ? dto.accountId : null
     if (dto.note !== undefined) data.note = dto.note ? String(dto.note).slice(0, 200) : null
-    const r = await this.prisma.loan.update({ where: { id }, data })
+    const r = await this.prisma.loan.update({ where: { id }, data: { ...data, ...(await this.meta.bump(loan)) } })
     await this.backup.snapshot('编辑借还 ' + r.counterparty)
     return r
   }
@@ -92,11 +97,14 @@ export class LoansService {
     const note = (loan.note || '').startsWith(tag) ? loan.note : (tag + ' ' + (loan.note || '')).slice(0, 200)
     await this.prisma.loan.update({
       where: { id },
-      data: mode === 'settled' ? { settledAmount: loan.amount, note } : { note },
+      data: { ...(mode === 'settled' ? { settledAmount: loan.amount } : {}), note, ...(await this.meta.bump(loan)) },
     })
-    const mirror = await this.prisma.account.findFirst({ where: { name: '债权-' + loan.counterparty } })
+    const mirror = await this.prisma.account.findFirst({ where: { name: '债权-' + loan.counterparty, deleted: false } })
     if (mirror && !mirror.archived) {
-      await this.prisma.account.update({ where: { id: mirror.id }, data: { archived: true } })
+      await this.prisma.account.update({
+        where: { id: mirror.id },
+        data: { archived: true, ...(await this.meta.bump(mirror)) },
+      })
     }
     await this.backup.snapshot((mode === 'settled' ? '结清' : '结束') + '借还 ' + loan.counterparty)
     return this.list()
@@ -108,7 +116,7 @@ export class LoansService {
     await this.prisma.deletedItem.create({
       data: { kind: 'loan', summary: `${loan.direction === 'out' ? '借出' : '借入'} ${loan.counterparty}`, payload: JSON.stringify(loan), deletedAt: Math.floor(Date.now() / 1000) },
     })
-    await this.prisma.loan.delete({ where: { id } })
+    await this.prisma.loan.update({ where: { id }, data: await this.meta.tombstone(loan) })
     await this.backup.snapshot('删除借还 ' + loan.counterparty)
     return { ok: true }
   }

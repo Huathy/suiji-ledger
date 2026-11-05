@@ -1,23 +1,27 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
 import { BackupService } from '../backup.service'
-import { computeIntervalStats, daysBetween, YM_RE, YMD_RE, IntervalStats } from '../../../../packages/shared/src/index'
+import { RecordMetaService } from '../sync/record-meta.service'
+import { planBigItems, type IncomingBigItem } from './bigitem-diff'
+import { computeIntervalStats, daysBetween, YM_RE, YMD_RE, IntervalStats, type TimeSortDir } from '../../../../packages/shared/src/index'
 
 type Snap = { id: number; ym: string; accountId: number; balance: number; recordDate: string; note: string | null }
+/** 时间排序方向：与 Prisma 的 orderBy 取值同字面量，直接透传 */
+type SortDir = TimeSortDir
 
 @Injectable()
 export class MonthsService {
-  constructor(private prisma: PrismaService, private backup: BackupService) {}
+  constructor(private prisma: PrismaService, private backup: BackupService, private meta: RecordMetaService) {}
 
   // ---------- 基础查询 ----------
 
-  /** 全部快照按 ym 升序（本地数据量级一次性载入即可） */
+  /** 全部快照按 ym 升序（本地数据量级一次性载入即可）；墓碑不参与任何计算 */
   private async allSnaps(): Promise<Snap[]> {
-    return this.prisma.monthlySnapshot.findMany({ orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
+    return this.prisma.monthlySnapshot.findMany({ where: { deleted: false }, orderBy: [{ ym: 'asc' }, { id: 'asc' }] })
   }
 
   private async allAccounts() {
-    return this.prisma.account.findMany({ orderBy: [{ sort: 'asc' }, { id: 'asc' }] })
+    return this.prisma.account.findMany({ where: { deleted: false }, orderBy: [{ sort: 'asc' }, { id: 'asc' }] })
   }
 
   /** 单账户在 ym 之前最近一次快照余额，否则初始余额 */
@@ -63,10 +67,15 @@ export class MonthsService {
     return withDelta.reverse() // 近的在前
   }
 
-  /** 月份列表（总览/月选择器/近期入口共用） */
-  async months(limit = 60) {
-    const points = await this.recordPoints()
-    return { months: points.slice(0, limit) }
+  /**
+   * 月份列表（总览/月选择器/近期入口共用）。
+   * dir='desc'（默认）＝时间倒序，最近的月份在前；dir='asc'＝时间顺序，最早记账的月份在前。
+   * 注意 limit 始终截取「最近的 N 个月」，只是返回的排列方向变，避免切方向就只看得到最老几个月。
+   */
+  async months(limit = 60, dir: SortDir = 'desc') {
+    const points = await this.recordPoints() // 近的在前
+    const picked = points.slice(0, limit)
+    return { months: dir === 'asc' ? picked.slice().reverse() : picked }
   }
 
   // ---------- 月度详情 ----------
@@ -76,8 +85,8 @@ export class MonthsService {
     const [snaps, accounts, entries, types] = await Promise.all([
       this.allSnaps(),
       this.allAccounts(),
-      this.prisma.changeEntry.findMany({ where: { ym }, orderBy: [{ auto: 'asc' }, { id: 'asc' }] }),
-      this.prisma.recordType.findMany(),
+      this.prisma.changeEntry.findMany({ where: { ym, deleted: false }, orderBy: [{ auto: 'asc' }, { id: 'asc' }] }),
+      this.prisma.recordType.findMany({ where: { deleted: false } }),
     ])
     const ymSnaps = snaps.filter((s) => s.ym === ym)
     const tmap = new Map(types.map((t) => [t.id, t]))
@@ -87,6 +96,7 @@ export class MonthsService {
       const prev = this.prevBalanceOf(snaps, accounts, a.id, ym)
       return {
         id: a.id,
+        uid: a.uid,
         name: a.name,
         emoji: a.emoji,
         kind: a.kind,
@@ -127,6 +137,7 @@ export class MonthsService {
       const acc = accounts.find((a) => a.id === e.accountId)
       return {
         id: e.id,
+        uid: e.uid,
         ym: e.ym,
         typeId: e.typeId,
         name: t?.name ?? '未知类型',
@@ -164,12 +175,21 @@ export class MonthsService {
 
   // ---------- 平账（保存当月快照 + 大项） ----------
 
+  /**
+   * R1 灰度开关（本机 Setting，不投影进 git）：'on' = 大项落库退回旧"全量替换"语义。
+   * 默认 off 走 uid-diff。这个键只用于新算法出问题时一键回退验证，长期应删。
+   */
+  private async reconcileLegacyMode(): Promise<boolean> {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'reconcileLegacy' } })
+    return row?.value === 'on'
+  }
+
   async reconcile(dto: {
     ym?: string
     recordDate?: string
     note?: string
     balances?: { accountId: number; balance: number; note?: string }[]
-    bigItems?: { typeId: number; amount: number; note?: string; accountId?: number | null }[]
+    bigItems?: { uid?: string; typeId: number; amount: number; note?: string; accountId?: number | null }[]
   }) {
     const ym = String(dto.ym || '')
     if (!YM_RE.test(ym)) throw new BadRequestException('月份格式应为 YYYY-MM')
@@ -191,30 +211,85 @@ export class MonthsService {
       }
     }
 
-    // 1. 快照 upsert（未填写的账户保持原快照不动）
+    // 1. 快照 upsert（未填写的账户保持原快照不动）；rev 前进让对端看见"这条变过"
     for (const b of balances) {
+      const acc = accounts.find((a) => a.id === b.accountId)
       const existing = await this.prisma.monthlySnapshot.findUnique({
         where: { ym_accountId: { ym, accountId: b.accountId } },
       })
+      const note = b.note ?? existing?.note ?? null
       if (existing) {
+        const changed = existing.balance !== b.balance || existing.recordDate !== recordDate || existing.note !== note
+        if (!changed) continue
         await this.prisma.monthlySnapshot.update({
           where: { id: existing.id },
-          data: { balance: b.balance, recordDate, note: b.note ?? existing.note },
+          data: { balance: b.balance, recordDate, note, ...(await this.meta.bump(existing)) },
         })
       } else {
+        const stamp = await this.meta.stamp()
         await this.prisma.monthlySnapshot.create({
-          data: { ym, accountId: b.accountId, balance: b.balance, recordDate, note: b.note ?? null },
+          data: {
+            // 快照 uid 是派生键：`${ym}__${accountUid}`，跨设备稳定（§3）
+            uid: acc?.uid ? `${ym}__${acc.uid}` : stamp.uid,
+            rev: stamp.rev,
+            updatedAt: stamp.updatedAt,
+            origin: stamp.origin,
+            deleted: false,
+            ym,
+            accountId: b.accountId,
+            balance: b.balance,
+            recordDate,
+            note,
+          },
         })
       }
     }
 
-    // 2. 替换大项条目（全量保存语义）
-    await this.prisma.changeEntry.deleteMany({ where: { ym, auto: false } })
+    // 2. 大项条目：**按 uid 做 diff**，不再 deleteMany
+    //    旧实现（deleteMany + create）会丢掉 uid，让对端把"我改了列表"读成"删光 + 新增一堆"，
+    //    还会把另一端刚加的大项静默删掉（§3.2 两个致命问题）。
+    //    计划计算抽成纯函数 planBigItems；R1 灰度：Setting.reconcileLegacy='on' 退回旧"全量替换"语义。
+    const existing = await this.prisma.changeEntry.findMany({ where: { ym, auto: false, deleted: false }, orderBy: { id: 'asc' } })
+    const incoming: IncomingBigItem[] = []
     for (const it of bigItems) {
       if (it.amount === 0 && !it.note) continue
-      await this.prisma.changeEntry.create({
-        data: { ym, typeId: it.typeId, amount: it.amount, note: it.note ?? null, accountId: it.accountId ?? null, auto: false },
+      incoming.push({
+        uid: it.uid ?? null,
+        typeId: it.typeId,
+        amount: it.amount,
+        note: it.note ? String(it.note).slice(0, 200) : null,
+        accountId: it.accountId ?? null,
       })
+    }
+    const plan = planBigItems(
+      existing.map((e) => ({ id: e.id, uid: e.uid, typeId: e.typeId, amount: e.amount, note: e.note ?? null, accountId: e.accountId ?? null })),
+      incoming,
+      (await this.reconcileLegacyMode()) ? 'legacy' : 'diff',
+    )
+    const rowById = new Map(existing.map((e) => [e.id, e]))
+    for (const u of plan.updates) {
+      await this.prisma.changeEntry.update({
+        where: { id: u.id },
+        data: { typeId: u.typeId, amount: u.amount, note: u.note, accountId: u.accountId, ...(await this.meta.bump(rowById.get(u.id)!)) },
+      })
+    }
+    for (const it of plan.creates) {
+      const stamp = await this.meta.stamp()
+      await this.prisma.changeEntry.create({
+        data: {
+          ...stamp,
+          ym,
+          typeId: it.typeId,
+          amount: it.amount,
+          note: it.note,
+          accountId: it.accountId,
+          auto: false,
+        },
+      })
+    }
+    // 本次列表里没出现的大项：打墓碑（不物理删，否则冲突会绕开 mergeDriver）
+    for (const id of plan.tombstoneIds) {
+      await this.prisma.changeEntry.update({ where: { id }, data: await this.meta.tombstone(rowById.get(id)!) })
     }
 
     // 3. 重算自动平账条目（备注默认「（批量记录）」，可自定义），返回当月详情
@@ -228,8 +303,8 @@ export class MonthsService {
     const [snaps, accounts, entries, builtin] = await Promise.all([
       this.allSnaps(),
       this.allAccounts(),
-      this.prisma.changeEntry.findMany({ where: { ym } }),
-      this.prisma.recordType.findFirst({ where: { builtin: true } }),
+      this.prisma.changeEntry.findMany({ where: { ym, deleted: false } }),
+      this.prisma.recordType.findFirst({ where: { builtin: true, deleted: false } }),
     ])
     if (!builtin) throw new NotFoundException('内置平账类型缺失')
     const ymSnaps = snaps.filter((s) => s.ym === ym)
@@ -246,8 +321,18 @@ export class MonthsService {
     }
     const bigSum = entries.filter((e) => !e.auto).reduce((s, e) => s + e.amount, 0)
     const amount = delta - bigSum
+    // 自动条目是派生值，不参与同步，所以直接物理重建（不留墓碑）
+    const stamp = await this.meta.stamp()
     await this.prisma.changeEntry.create({
-      data: { ym, typeId: builtin.id, amount, auto: true, note, accountId: null },
+      data: {
+        ...stamp,
+        ym,
+        typeId: builtin.id,
+        amount,
+        auto: true,
+        note,
+        accountId: null,
+      },
     })
   }
 
@@ -265,7 +350,7 @@ export class MonthsService {
     }
     if (dto.note !== undefined) data.note = dto.note ? String(dto.note).slice(0, 200) : null
     if (dto.accountId !== undefined) data.accountId = dto.accountId ?? null
-    await this.prisma.changeEntry.update({ where: { id }, data })
+    await this.prisma.changeEntry.update({ where: { id }, data: { ...data, ...(await this.meta.bump(e)) } })
     await this.recomputeAuto(ym)
     await this.backup.snapshot('编辑大项 ' + ym)
     return this.detail(ym)
@@ -276,7 +361,8 @@ export class MonthsService {
     if (!e || e.ym !== ym) throw new NotFoundException('条目不存在')
     if (e.auto) throw new BadRequestException('平账条目不可删除，会随大项修改自动重算')
     await this.moveToRecycle('entry', `条目 #${id} · ${ym}`, e)
-    await this.prisma.changeEntry.delete({ where: { id } })
+    // 墓碑而不是物理删：物理删会让"我删的"和"你没同步到"无法区分，删除也会绕开 mergeDriver
+    await this.prisma.changeEntry.update({ where: { id }, data: await this.meta.tombstone(e) })
     await this.recomputeAuto(ym)
     await this.backup.snapshot('删除大项')
     return this.detail(ym)
@@ -288,8 +374,14 @@ export class MonthsService {
     if (!Number.isInteger(dto?.amount)) throw new BadRequestException('金额不合法（分）')
     const t = await this.prisma.recordType.findUnique({ where: { id: Number(dto?.typeId) } })
     if (!t) throw new BadRequestException('类型不存在')
+    const stamp = await this.meta.stamp()
     await this.prisma.changeEntry.create({
       data: {
+        uid: stamp.uid,
+        rev: stamp.rev,
+        updatedAt: stamp.updatedAt,
+        origin: stamp.origin,
+        deleted: false,
         ym, typeId: t.id, amount: dto.amount,
         note: dto?.note ? String(dto.note).slice(0, 200) : null,
         accountId: dto?.accountId ?? null, auto: false,
@@ -306,13 +398,17 @@ export class MonthsService {
     })
   }
 
-  /** 跨月搜索：备注 / 类型名 / 账户名 关键词 + 金额区间（元） */
-  async search(q: string, minYuan: number | null, maxYuan: number | null) {
+  /**
+   * 跨月搜索：备注 / 类型名 / 账户名 关键词 + 金额区间（元）。
+   * sortDir：'desc'（默认，时间倒序=新记录在前）| 'asc'（时间顺序=老记录在前），
+   * 与 /months、/recycle、/loans 同一套语义，前端全站开关一次翻转。
+   */
+  async search(q: string, minYuan: number | null, maxYuan: number | null, sortDir: SortDir = 'desc') {
     const kw = q.trim()
     const [entries, types, accounts] = await Promise.all([
-      this.prisma.changeEntry.findMany({ orderBy: [{ ym: 'desc' }, { id: 'desc' }] }),
+      this.prisma.changeEntry.findMany({ where: { deleted: false }, orderBy: [{ ym: sortDir }, { id: sortDir }] }),
       this.prisma.recordType.findMany(),
-      this.prisma.account.findMany(),
+      this.prisma.account.findMany({ where: { deleted: false } }),
     ])
     const tmap = new Map(types.map((t) => [t.id, t]))
     const amap = new Map(accounts.map((a) => [a.id, a]))
@@ -342,7 +438,7 @@ export class MonthsService {
   // ---------- 钱迹导入：批量写入月度快照（手动记录优先，不覆盖） ----------
 
   async importSnapshots(dto: {
-    snapshots?: { ym: string; accountName: string; kind?: string; balance: number; recordDate?: string }[]
+    snapshots?: { ym: string; accountName: string; kind?: string; balance: number; recordDate?: string; accountUid?: string; snapshotUid?: string }[]
   }) {
     const rows = dto?.snapshots || []
     if (rows.length === 0) throw new BadRequestException('没有可导入的快照')
@@ -364,11 +460,15 @@ export class MonthsService {
           accountId = existing.id
         } else {
           const max = await this.prisma.account.aggregate({ _max: { sort: true } })
+          const stamp = await this.meta.stamp()
+          const kind = r.kind === 'liability' ? 'liability' : 'asset'
           const acc = await this.prisma.account.create({
             data: {
+              ...stamp,
+              uid: this.meta.deterministicUid('account', `${kind}::${accountName.slice(0, 30)}`),
               name: accountName.slice(0, 30),
               emoji: '🏦',
-              kind: r.kind === 'liability' ? 'liability' : 'asset',
+              kind,
               initBalance: 0,
               sort: (max._max.sort ?? 0) + 1,
               createdAt: Math.floor(Date.now() / 1000),
@@ -385,8 +485,22 @@ export class MonthsService {
       })
       if (existingSnap) { skipped++; continue }
       const recordDate = YMD_RE.test(r.recordDate || '') ? r.recordDate! : ym + '-28'
+      const stamp = await this.meta.stamp()
+      const accUid = (await this.prisma.account.findUnique({ where: { id: accountId } }))?.uid
+      // 防翻倍（bug20261104）：钱迹导入的快照 uid 必须跨恢复稳定。
+      // 旧逻辑 `stamp.uid` 随机 → 同一钱迹文件在两端各导一次即翻倍。
+      // 现改确定性：快照 uid 恒为 `${ym}__${accountUid}`（与 m4a 迁移/ensureUids 同规则），
+      // 账户 uid 同样确定性派生（跨端同名同属性同 uid，见 restore）。
+      const detAccUid = accUid || this.meta.deterministicUid('account', `${r.kind === 'liability' ? 'liability' : 'asset'}::${accountName}`)
       await this.prisma.monthlySnapshot.create({
-        data: { ym, accountId, balance: r.balance, recordDate, note: '钱迹导入' },
+        data: {
+          uid: `${ym}__${detAccUid}`,
+          rev: stamp.rev,
+          updatedAt: stamp.updatedAt,
+          origin: stamp.origin,
+          deleted: false,
+          ym, accountId, balance: r.balance, recordDate, note: '钱迹导入',
+        },
       })
       created++
       touchedYms.add(ym)

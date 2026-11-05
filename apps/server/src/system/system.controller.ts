@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Put, Query, Res, UseGuards } from '@nestjs
 import { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard'
 import { SystemService } from './system.service'
-import { fileStamp, stampText } from '../../../../packages/shared/src/index'
+import { fileStamp, stampText, parseTimeSortDir } from '../../../../packages/shared/src/index'
 
 /** 导出文件名统一带 年月日-时分秒（问题 3） */
 function stampedName(prefix: string, ext: string): string {
@@ -50,8 +50,9 @@ export class SystemController {
   }
 
   @Get('matrix.csv')
-  async matrixCsv(@Res() res: Response) {
-    const csv = await this.svc.matrixCsv()
+  async matrixCsv(@Res() res: Response, @Query('dir') dir?: string) {
+    // 行序跟随全站时间排序方向（倒序=最新月份在前 / 顺序=最早在前）
+    const csv = await this.svc.matrixCsv(parseTimeSortDir(dir))
     const name = stampedName('suiji-ledger-balance-sheet', 'csv')
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename="${name}"`)

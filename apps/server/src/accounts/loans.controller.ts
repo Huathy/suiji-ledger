@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard'
 import { LoansService } from './loans.service'
+import { parseTimeSortDir } from '../../../../packages/shared/src/index'
 
 @Controller('loans')
 @UseGuards(AuthGuard)
@@ -8,8 +9,8 @@ export class LoansController {
   constructor(private svc: LoansService) {}
 
   @Get()
-  list() {
-    return this.svc.list()
+  list(@Query('dir') dir?: string) {
+    return this.svc.list(parseTimeSortDir(dir))
   }
 
   @Post()
