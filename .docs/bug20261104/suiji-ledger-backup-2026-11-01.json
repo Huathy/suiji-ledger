@@ -1,0 +1,2411 @@
+{
+  "format": "suiji-ledger-backup",
+  "version": 1,
+  "exportedAt": 1793543316912,
+  "types": [
+    {
+      "id": 1,
+      "name": "平账",
+      "emoji": "⚖️",
+      "color": null,
+      "direction": "neutral",
+      "builtin": true,
+      "sort": 0
+    }
+  ],
+  "accounts": [
+    {
+      "id": 1,
+      "name": "股票",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "押金、理财、投资",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 1,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524775
+    },
+    {
+      "id": 2,
+      "name": "微信",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 2,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524775
+    },
+    {
+      "id": 3,
+      "name": "建行",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 3,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524775
+    },
+    {
+      "id": 4,
+      "name": "招商银行",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 4,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524775
+    },
+    {
+      "id": 5,
+      "name": "宁波银行",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 5,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 6,
+      "name": "支付宝（含余利宝）",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 6,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 7,
+      "name": "公积金（衢州）",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 7,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 8,
+      "name": "网商银行",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 8,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 9,
+      "name": "支付宝（小荷包）",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": null,
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 9,
+      "archived": true,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 10,
+      "name": "广州工资卡",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 10,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 11,
+      "name": "衢州工资卡",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": "资金",
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 11,
+      "archived": false,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 12,
+      "name": "公积金（广州）(封存)",
+      "emoji": "🏦",
+      "kind": "asset",
+      "group": null,
+      "initBalance": 0,
+      "inNetWorth": true,
+      "sort": 12,
+      "archived": true,
+      "note": "钱迹导入",
+      "createdAt": 1793524776
+    },
+    {
+      "id": 13,
+      "name": "住房",
+      "emoji": "🏠",
+      "kind": "asset",
+      "group": "押金、理财、投资",
+      "initBalance": 39000000,
+      "inNetWorth": false,
+      "sort": 13,
+      "archived": false,
+      "note": null,
+      "createdAt": 1793543071
+    }
+  ],
+  "snapshots": [
+    {
+      "id": 24,
+      "ym": "2022-07",
+      "accountId": 3,
+      "balance": 15251,
+      "recordDate": "2022-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 95,
+      "ym": "2022-07",
+      "accountId": 6,
+      "balance": 722041,
+      "recordDate": "2022-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 25,
+      "ym": "2022-09",
+      "accountId": 3,
+      "balance": 15251,
+      "recordDate": "2022-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 96,
+      "ym": "2022-09",
+      "accountId": 6,
+      "balance": 329119,
+      "recordDate": "2022-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 26,
+      "ym": "2022-10",
+      "accountId": 3,
+      "balance": 15251,
+      "recordDate": "2022-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 97,
+      "ym": "2022-10",
+      "accountId": 6,
+      "balance": 329119,
+      "recordDate": "2022-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 4,
+      "ym": "2022-12",
+      "accountId": 2,
+      "balance": 44498,
+      "recordDate": "2022-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 27,
+      "ym": "2022-12",
+      "accountId": 3,
+      "balance": 1071818,
+      "recordDate": "2022-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 98,
+      "ym": "2022-12",
+      "accountId": 6,
+      "balance": 2272916,
+      "recordDate": "2022-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 28,
+      "ym": "2023-02",
+      "accountId": 3,
+      "balance": 695164,
+      "recordDate": "2023-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 99,
+      "ym": "2023-02",
+      "accountId": 6,
+      "balance": 3659644,
+      "recordDate": "2023-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 169,
+      "ym": "2023-02",
+      "accountId": 10,
+      "balance": 241361,
+      "recordDate": "2023-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 5,
+      "ym": "2023-03",
+      "accountId": 2,
+      "balance": 139944,
+      "recordDate": "2023-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 29,
+      "ym": "2023-03",
+      "accountId": 3,
+      "balance": 685801,
+      "recordDate": "2023-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 100,
+      "ym": "2023-03",
+      "accountId": 6,
+      "balance": 1701081,
+      "recordDate": "2023-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 170,
+      "ym": "2023-03",
+      "accountId": 10,
+      "balance": 145940,
+      "recordDate": "2023-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 6,
+      "ym": "2023-04",
+      "accountId": 2,
+      "balance": 144944,
+      "recordDate": "2023-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 30,
+      "ym": "2023-04",
+      "accountId": 3,
+      "balance": 684213,
+      "recordDate": "2023-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 101,
+      "ym": "2023-04",
+      "accountId": 6,
+      "balance": 2364184,
+      "recordDate": "2023-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 171,
+      "ym": "2023-04",
+      "accountId": 10,
+      "balance": 110130,
+      "recordDate": "2023-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 7,
+      "ym": "2023-05",
+      "accountId": 2,
+      "balance": 8650,
+      "recordDate": "2023-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 31,
+      "ym": "2023-05",
+      "accountId": 3,
+      "balance": 679475,
+      "recordDate": "2023-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 102,
+      "ym": "2023-05",
+      "accountId": 6,
+      "balance": 2955179,
+      "recordDate": "2023-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 172,
+      "ym": "2023-05",
+      "accountId": 10,
+      "balance": 3305,
+      "recordDate": "2023-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 208,
+      "ym": "2023-05",
+      "accountId": 12,
+      "balance": 108860,
+      "recordDate": "2023-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 32,
+      "ym": "2023-06",
+      "accountId": 3,
+      "balance": 673747,
+      "recordDate": "2023-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 175,
+      "ym": "2023-06",
+      "accountId": 11,
+      "balance": 711124,
+      "recordDate": "2023-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 209,
+      "ym": "2023-06",
+      "accountId": 12,
+      "balance": 217660,
+      "recordDate": "2023-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 33,
+      "ym": "2023-09",
+      "accountId": 3,
+      "balance": 677267,
+      "recordDate": "2023-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 176,
+      "ym": "2023-09",
+      "accountId": 11,
+      "balance": 861953,
+      "recordDate": "2023-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 210,
+      "ym": "2023-09",
+      "accountId": 12,
+      "balance": 234076,
+      "recordDate": "2023-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 8,
+      "ym": "2023-10",
+      "accountId": 2,
+      "balance": 10393,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 34,
+      "ym": "2023-10",
+      "accountId": 3,
+      "balance": 699759,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 103,
+      "ym": "2023-10",
+      "accountId": 6,
+      "balance": 120862,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 129,
+      "ym": "2023-10",
+      "accountId": 7,
+      "balance": 340400,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 177,
+      "ym": "2023-10",
+      "accountId": 11,
+      "balance": 273098,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 211,
+      "ym": "2023-10",
+      "accountId": 12,
+      "balance": 234076,
+      "recordDate": "2023-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 35,
+      "ym": "2023-11",
+      "accountId": 3,
+      "balance": 689522,
+      "recordDate": "2023-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 104,
+      "ym": "2023-11",
+      "accountId": 6,
+      "balance": 2006767,
+      "recordDate": "2023-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 130,
+      "ym": "2023-11",
+      "accountId": 7,
+      "balance": 340400,
+      "recordDate": "2023-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 178,
+      "ym": "2023-11",
+      "accountId": 11,
+      "balance": 214598,
+      "recordDate": "2023-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 212,
+      "ym": "2023-11",
+      "accountId": 12,
+      "balance": 234076,
+      "recordDate": "2023-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 36,
+      "ym": "2023-12",
+      "accountId": 3,
+      "balance": 689522,
+      "recordDate": "2023-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 105,
+      "ym": "2023-12",
+      "accountId": 6,
+      "balance": 2337155,
+      "recordDate": "2023-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 131,
+      "ym": "2023-12",
+      "accountId": 7,
+      "balance": 510600,
+      "recordDate": "2023-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 179,
+      "ym": "2023-12",
+      "accountId": 11,
+      "balance": 514547,
+      "recordDate": "2023-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 213,
+      "ym": "2023-12",
+      "accountId": 12,
+      "balance": 234076,
+      "recordDate": "2023-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 37,
+      "ym": "2024-01",
+      "accountId": 3,
+      "balance": 2375644,
+      "recordDate": "2024-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 106,
+      "ym": "2024-01",
+      "accountId": 6,
+      "balance": 2387011,
+      "recordDate": "2024-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 132,
+      "ym": "2024-01",
+      "accountId": 7,
+      "balance": 510600,
+      "recordDate": "2024-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 180,
+      "ym": "2024-01",
+      "accountId": 11,
+      "balance": 1050231,
+      "recordDate": "2024-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 9,
+      "ym": "2024-02",
+      "accountId": 2,
+      "balance": 77730,
+      "recordDate": "2024-02-29",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 38,
+      "ym": "2024-02",
+      "accountId": 3,
+      "balance": 1541494,
+      "recordDate": "2024-02-29",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 107,
+      "ym": "2024-02",
+      "accountId": 6,
+      "balance": 2988707,
+      "recordDate": "2024-02-29",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 133,
+      "ym": "2024-02",
+      "accountId": 7,
+      "balance": 1021200,
+      "recordDate": "2024-02-29",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 181,
+      "ym": "2024-02",
+      "accountId": 11,
+      "balance": 1908680,
+      "recordDate": "2024-02-29",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 10,
+      "ym": "2024-03",
+      "accountId": 2,
+      "balance": 33800,
+      "recordDate": "2024-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 39,
+      "ym": "2024-03",
+      "accountId": 3,
+      "balance": 1344756,
+      "recordDate": "2024-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 108,
+      "ym": "2024-03",
+      "accountId": 6,
+      "balance": 3296960,
+      "recordDate": "2024-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 134,
+      "ym": "2024-03",
+      "accountId": 7,
+      "balance": 1021200,
+      "recordDate": "2024-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 182,
+      "ym": "2024-03",
+      "accountId": 11,
+      "balance": 2344446,
+      "recordDate": "2024-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 40,
+      "ym": "2024-04",
+      "accountId": 3,
+      "balance": 1042821,
+      "recordDate": "2024-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 109,
+      "ym": "2024-04",
+      "accountId": 6,
+      "balance": 3923663,
+      "recordDate": "2024-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 135,
+      "ym": "2024-04",
+      "accountId": 7,
+      "balance": 1021200,
+      "recordDate": "2024-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 173,
+      "ym": "2024-04",
+      "accountId": 10,
+      "balance": 510929,
+      "recordDate": "2024-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 183,
+      "ym": "2024-04",
+      "accountId": 11,
+      "balance": 1729352,
+      "recordDate": "2024-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 41,
+      "ym": "2024-05",
+      "accountId": 3,
+      "balance": 972821,
+      "recordDate": "2024-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 110,
+      "ym": "2024-05",
+      "accountId": 6,
+      "balance": 4620713,
+      "recordDate": "2024-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 136,
+      "ym": "2024-05",
+      "accountId": 7,
+      "balance": 1531800,
+      "recordDate": "2024-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 174,
+      "ym": "2024-05",
+      "accountId": 10,
+      "balance": 362870,
+      "recordDate": "2024-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 184,
+      "ym": "2024-05",
+      "accountId": 11,
+      "balance": 2688763,
+      "recordDate": "2024-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 11,
+      "ym": "2024-06",
+      "accountId": 2,
+      "balance": 12462,
+      "recordDate": "2024-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 42,
+      "ym": "2024-06",
+      "accountId": 3,
+      "balance": 788503,
+      "recordDate": "2024-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 111,
+      "ym": "2024-06",
+      "accountId": 6,
+      "balance": 4646234,
+      "recordDate": "2024-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 137,
+      "ym": "2024-06",
+      "accountId": 7,
+      "balance": 1531800,
+      "recordDate": "2024-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 185,
+      "ym": "2024-06",
+      "accountId": 11,
+      "balance": 3439879,
+      "recordDate": "2024-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 12,
+      "ym": "2024-07",
+      "accountId": 2,
+      "balance": 540185,
+      "recordDate": "2024-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 43,
+      "ym": "2024-07",
+      "accountId": 3,
+      "balance": 713804,
+      "recordDate": "2024-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 112,
+      "ym": "2024-07",
+      "accountId": 6,
+      "balance": 5162177,
+      "recordDate": "2024-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 138,
+      "ym": "2024-07",
+      "accountId": 7,
+      "balance": 1720142,
+      "recordDate": "2024-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 186,
+      "ym": "2024-07",
+      "accountId": 11,
+      "balance": 3545059,
+      "recordDate": "2024-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 13,
+      "ym": "2024-08",
+      "accountId": 2,
+      "balance": 413479,
+      "recordDate": "2024-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 44,
+      "ym": "2024-08",
+      "accountId": 3,
+      "balance": 673382,
+      "recordDate": "2024-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 113,
+      "ym": "2024-08",
+      "accountId": 6,
+      "balance": 5469282,
+      "recordDate": "2024-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 139,
+      "ym": "2024-08",
+      "accountId": 7,
+      "balance": 1890342,
+      "recordDate": "2024-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 187,
+      "ym": "2024-08",
+      "accountId": 11,
+      "balance": 4109767,
+      "recordDate": "2024-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 14,
+      "ym": "2024-09",
+      "accountId": 2,
+      "balance": 180338,
+      "recordDate": "2024-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 45,
+      "ym": "2024-09",
+      "accountId": 3,
+      "balance": 709357,
+      "recordDate": "2024-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 114,
+      "ym": "2024-09",
+      "accountId": 6,
+      "balance": 5781491,
+      "recordDate": "2024-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 140,
+      "ym": "2024-09",
+      "accountId": 7,
+      "balance": 1890342,
+      "recordDate": "2024-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 188,
+      "ym": "2024-09",
+      "accountId": 11,
+      "balance": 4705621,
+      "recordDate": "2024-09-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 15,
+      "ym": "2024-11",
+      "accountId": 2,
+      "balance": 23142,
+      "recordDate": "2024-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 46,
+      "ym": "2024-11",
+      "accountId": 3,
+      "balance": 688131,
+      "recordDate": "2024-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 115,
+      "ym": "2024-11",
+      "accountId": 6,
+      "balance": 6427772,
+      "recordDate": "2024-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 141,
+      "ym": "2024-11",
+      "accountId": 7,
+      "balance": 2571142,
+      "recordDate": "2024-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 189,
+      "ym": "2024-11",
+      "accountId": 11,
+      "balance": 5216808,
+      "recordDate": "2024-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 16,
+      "ym": "2024-12",
+      "accountId": 2,
+      "balance": 36211,
+      "recordDate": "2024-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 47,
+      "ym": "2024-12",
+      "accountId": 3,
+      "balance": 673585,
+      "recordDate": "2024-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 116,
+      "ym": "2024-12",
+      "accountId": 6,
+      "balance": 7050612,
+      "recordDate": "2024-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 142,
+      "ym": "2024-12",
+      "accountId": 7,
+      "balance": 2741342,
+      "recordDate": "2024-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 190,
+      "ym": "2024-12",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2024-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 17,
+      "ym": "2025-01",
+      "accountId": 2,
+      "balance": 36211,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 48,
+      "ym": "2025-01",
+      "accountId": 3,
+      "balance": 673585,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 79,
+      "ym": "2025-01",
+      "accountId": 5,
+      "balance": 3032951,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 117,
+      "ym": "2025-01",
+      "accountId": 6,
+      "balance": 2050612,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 143,
+      "ym": "2025-01",
+      "accountId": 7,
+      "balance": 2741342,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 191,
+      "ym": "2025-01",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 18,
+      "ym": "2025-02",
+      "accountId": 2,
+      "balance": 53619,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 49,
+      "ym": "2025-02",
+      "accountId": 3,
+      "balance": 672565,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 80,
+      "ym": "2025-02",
+      "accountId": 5,
+      "balance": 1727127,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 144,
+      "ym": "2025-02",
+      "accountId": 7,
+      "balance": 2741342,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 168,
+      "ym": "2025-02",
+      "accountId": 9,
+      "balance": 224821,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 192,
+      "ym": "2025-02",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 19,
+      "ym": "2025-03",
+      "accountId": 2,
+      "balance": 1400,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 50,
+      "ym": "2025-03",
+      "accountId": 3,
+      "balance": 672612,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 65,
+      "ym": "2025-03",
+      "accountId": 4,
+      "balance": 3305352,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 118,
+      "ym": "2025-03",
+      "accountId": 6,
+      "balance": 901323,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 145,
+      "ym": "2025-03",
+      "accountId": 7,
+      "balance": 3251942,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 193,
+      "ym": "2025-03",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-03-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 51,
+      "ym": "2025-04",
+      "accountId": 3,
+      "balance": 672612,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 66,
+      "ym": "2025-04",
+      "accountId": 4,
+      "balance": 1155575,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 81,
+      "ym": "2025-04",
+      "accountId": 5,
+      "balance": 128986,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 119,
+      "ym": "2025-04",
+      "accountId": 6,
+      "balance": 4460572,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 146,
+      "ym": "2025-04",
+      "accountId": 7,
+      "balance": 3251942,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 194,
+      "ym": "2025-04",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 52,
+      "ym": "2025-05",
+      "accountId": 3,
+      "balance": 678163,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 67,
+      "ym": "2025-05",
+      "accountId": 4,
+      "balance": 1155575,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 82,
+      "ym": "2025-05",
+      "accountId": 5,
+      "balance": 449573,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 120,
+      "ym": "2025-05",
+      "accountId": 6,
+      "balance": 5163310,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 147,
+      "ym": "2025-05",
+      "accountId": 7,
+      "balance": 3592342,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 195,
+      "ym": "2025-05",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 53,
+      "ym": "2025-06",
+      "accountId": 3,
+      "balance": 713285,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 68,
+      "ym": "2025-06",
+      "accountId": 4,
+      "balance": 1155377,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 83,
+      "ym": "2025-06",
+      "accountId": 5,
+      "balance": 1052422,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 121,
+      "ym": "2025-06",
+      "accountId": 6,
+      "balance": 5046030,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 148,
+      "ym": "2025-06",
+      "accountId": 7,
+      "balance": 3592342,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 196,
+      "ym": "2025-06",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-06-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 54,
+      "ym": "2025-07",
+      "accountId": 3,
+      "balance": 684793,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 69,
+      "ym": "2025-07",
+      "accountId": 4,
+      "balance": 1154815,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 84,
+      "ym": "2025-07",
+      "accountId": 5,
+      "balance": 932182,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 122,
+      "ym": "2025-07",
+      "accountId": 6,
+      "balance": 5693611,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 149,
+      "ym": "2025-07",
+      "accountId": 7,
+      "balance": 3982136,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 197,
+      "ym": "2025-07",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 20,
+      "ym": "2025-08",
+      "accountId": 2,
+      "balance": 10038,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 55,
+      "ym": "2025-08",
+      "accountId": 3,
+      "balance": 1049883,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 70,
+      "ym": "2025-08",
+      "accountId": 4,
+      "balance": 1154815,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 85,
+      "ym": "2025-08",
+      "accountId": 5,
+      "balance": 801242,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 123,
+      "ym": "2025-08",
+      "accountId": 6,
+      "balance": 6153217,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 150,
+      "ym": "2025-08",
+      "accountId": 7,
+      "balance": 4152336,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 198,
+      "ym": "2025-08",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 21,
+      "ym": "2025-10",
+      "accountId": 2,
+      "balance": 417717,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 56,
+      "ym": "2025-10",
+      "accountId": 3,
+      "balance": 682685,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 71,
+      "ym": "2025-10",
+      "accountId": 4,
+      "balance": 1153693,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 86,
+      "ym": "2025-10",
+      "accountId": 5,
+      "balance": 1398834,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 124,
+      "ym": "2025-10",
+      "accountId": 6,
+      "balance": 6891263,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 151,
+      "ym": "2025-10",
+      "accountId": 7,
+      "balance": 4152336,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 199,
+      "ym": "2025-10",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-10-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 22,
+      "ym": "2025-11",
+      "accountId": 2,
+      "balance": 417717,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 57,
+      "ym": "2025-11",
+      "accountId": 3,
+      "balance": 682685,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 72,
+      "ym": "2025-11",
+      "accountId": 4,
+      "balance": 4004788,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 87,
+      "ym": "2025-11",
+      "accountId": 5,
+      "balance": 1398834,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 152,
+      "ym": "2025-11",
+      "accountId": 7,
+      "balance": 4152336,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 160,
+      "ym": "2025-11",
+      "accountId": 8,
+      "balance": 5124481,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 200,
+      "ym": "2025-11",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-11-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 23,
+      "ym": "2025-12",
+      "accountId": 2,
+      "balance": 153447,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 58,
+      "ym": "2025-12",
+      "accountId": 3,
+      "balance": 691442,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 73,
+      "ym": "2025-12",
+      "accountId": 4,
+      "balance": 3858702,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 88,
+      "ym": "2025-12",
+      "accountId": 5,
+      "balance": 2041541,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 153,
+      "ym": "2025-12",
+      "accountId": 7,
+      "balance": 2612936,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 161,
+      "ym": "2025-12",
+      "accountId": 8,
+      "balance": 6129408,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 201,
+      "ym": "2025-12",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2025-12-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 59,
+      "ym": "2026-01",
+      "accountId": 3,
+      "balance": 691442,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 74,
+      "ym": "2026-01",
+      "accountId": 4,
+      "balance": 3710299,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 89,
+      "ym": "2026-01",
+      "accountId": 5,
+      "balance": 2576308,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 154,
+      "ym": "2026-01",
+      "accountId": 7,
+      "balance": 2945736,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 162,
+      "ym": "2026-01",
+      "accountId": 8,
+      "balance": 6134825,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 202,
+      "ym": "2026-01",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-01-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 60,
+      "ym": "2026-02",
+      "accountId": 3,
+      "balance": 717611,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 75,
+      "ym": "2026-02",
+      "accountId": 4,
+      "balance": 301592,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 90,
+      "ym": "2026-02",
+      "accountId": 5,
+      "balance": 3564807,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 155,
+      "ym": "2026-02",
+      "accountId": 7,
+      "balance": 2945736,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 163,
+      "ym": "2026-02",
+      "accountId": 8,
+      "balance": 2741595,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 203,
+      "ym": "2026-02",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-02-28",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 61,
+      "ym": "2026-04",
+      "accountId": 3,
+      "balance": 714044,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 76,
+      "ym": "2026-04",
+      "accountId": 4,
+      "balance": 132442,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 91,
+      "ym": "2026-04",
+      "accountId": 5,
+      "balance": 4009109,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 125,
+      "ym": "2026-04",
+      "accountId": 6,
+      "balance": 322401,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 156,
+      "ym": "2026-04",
+      "accountId": 7,
+      "balance": 3444936,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 164,
+      "ym": "2026-04",
+      "accountId": 8,
+      "balance": 3347499,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 204,
+      "ym": "2026-04",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-04-30",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 1,
+      "ym": "2026-05",
+      "accountId": 1,
+      "balance": 3277520,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 62,
+      "ym": "2026-05",
+      "accountId": 3,
+      "balance": 710668,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 77,
+      "ym": "2026-05",
+      "accountId": 4,
+      "balance": 129852,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 92,
+      "ym": "2026-05",
+      "accountId": 5,
+      "balance": 1316518,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 126,
+      "ym": "2026-05",
+      "accountId": 6,
+      "balance": 295438,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 157,
+      "ym": "2026-05",
+      "accountId": 7,
+      "balance": 3444936,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 165,
+      "ym": "2026-05",
+      "accountId": 8,
+      "balance": 3648839,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 205,
+      "ym": "2026-05",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-05-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 2,
+      "ym": "2026-07",
+      "accountId": 1,
+      "balance": 1852200,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 63,
+      "ym": "2026-07",
+      "accountId": 3,
+      "balance": 709447,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 78,
+      "ym": "2026-07",
+      "accountId": 4,
+      "balance": 126841,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 93,
+      "ym": "2026-07",
+      "accountId": 5,
+      "balance": 1208782,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 127,
+      "ym": "2026-07",
+      "accountId": 6,
+      "balance": 1027792,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 158,
+      "ym": "2026-07",
+      "accountId": 7,
+      "balance": 3839047,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 166,
+      "ym": "2026-07",
+      "accountId": 8,
+      "balance": 4155423,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 206,
+      "ym": "2026-07",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-07-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 3,
+      "ym": "2026-08",
+      "accountId": 1,
+      "balance": 1887800,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 64,
+      "ym": "2026-08",
+      "accountId": 3,
+      "balance": 704200,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 94,
+      "ym": "2026-08",
+      "accountId": 5,
+      "balance": 784501,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 128,
+      "ym": "2026-08",
+      "accountId": 6,
+      "balance": 1123992,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 159,
+      "ym": "2026-08",
+      "accountId": 7,
+      "balance": 3839047,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 167,
+      "ym": "2026-08",
+      "accountId": 8,
+      "balance": 4155423,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 207,
+      "ym": "2026-08",
+      "accountId": 11,
+      "balance": 4300952,
+      "recordDate": "2026-08-31",
+      "note": "钱迹导入"
+    },
+    {
+      "id": 214,
+      "ym": "2026-11",
+      "accountId": 12,
+      "balance": 0,
+      "recordDate": "2026-11-01",
+      "note": "快速调整"
+    },
+    {
+      "id": 215,
+      "ym": "2026-11",
+      "accountId": 9,
+      "balance": 0,
+      "recordDate": "2026-11-01",
+      "note": "快速调整"
+    },
+    {
+      "id": 216,
+      "ym": "2026-11",
+      "accountId": 1,
+      "balance": 1869551,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 217,
+      "ym": "2026-11",
+      "accountId": 2,
+      "balance": 33269,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 218,
+      "ym": "2026-11",
+      "accountId": 3,
+      "balance": 2480,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 219,
+      "ym": "2026-11",
+      "accountId": 4,
+      "balance": 1250160,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 220,
+      "ym": "2026-11",
+      "accountId": 5,
+      "balance": 934760,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 221,
+      "ym": "2026-11",
+      "accountId": 6,
+      "balance": 2416827,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 222,
+      "ym": "2026-11",
+      "accountId": 7,
+      "balance": 4995353,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 223,
+      "ym": "2026-11",
+      "accountId": 8,
+      "balance": 6404926,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 224,
+      "ym": "2026-11",
+      "accountId": 10,
+      "balance": 0,
+      "recordDate": "2026-11-01",
+      "note": null
+    },
+    {
+      "id": 225,
+      "ym": "2026-11",
+      "accountId": 11,
+      "balance": 1063337,
+      "recordDate": "2026-11-01",
+      "note": null
+    }
+  ],
+  "entries": [
+    {
+      "id": 24,
+      "ym": "2022-07",
+      "typeId": 1,
+      "amount": 737292,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 25,
+      "ym": "2022-09",
+      "typeId": 1,
+      "amount": -392922,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 26,
+      "ym": "2022-10",
+      "typeId": 1,
+      "amount": 0,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 4,
+      "ym": "2022-12",
+      "typeId": 1,
+      "amount": 3044862,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 27,
+      "ym": "2023-02",
+      "typeId": 1,
+      "amount": 1251435,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 5,
+      "ym": "2023-03",
+      "typeId": 1,
+      "amount": -1967901,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 6,
+      "ym": "2023-04",
+      "typeId": 1,
+      "amount": 630705,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 7,
+      "ym": "2023-05",
+      "typeId": 1,
+      "amount": 451998,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 28,
+      "ym": "2023-06",
+      "typeId": 1,
+      "amount": 814196,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 29,
+      "ym": "2023-09",
+      "typeId": 1,
+      "amount": 170765,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 8,
+      "ym": "2023-10",
+      "typeId": 1,
+      "amount": -3058537,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 30,
+      "ym": "2023-11",
+      "typeId": 1,
+      "amount": 1817168,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 31,
+      "ym": "2023-12",
+      "typeId": 1,
+      "amount": 800537,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 32,
+      "ym": "2024-01",
+      "typeId": 1,
+      "amount": 2271662,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 9,
+      "ym": "2024-02",
+      "typeId": 1,
+      "amount": 1203932,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 10,
+      "ym": "2024-03",
+      "typeId": 1,
+      "amount": 503351,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 33,
+      "ym": "2024-04",
+      "typeId": 1,
+      "amount": 217298,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 34,
+      "ym": "2024-05",
+      "typeId": 1,
+      "amount": 1949002,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 11,
+      "ym": "2024-06",
+      "typeId": 1,
+      "amount": 570981,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 12,
+      "ym": "2024-07",
+      "typeId": 1,
+      "amount": 1262489,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 13,
+      "ym": "2024-08",
+      "typeId": 1,
+      "amount": 874885,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 14,
+      "ym": "2024-09",
+      "typeId": 1,
+      "amount": 710897,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 15,
+      "ym": "2024-11",
+      "typeId": 1,
+      "amount": 1659846,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 16,
+      "ym": "2024-12",
+      "typeId": 1,
+      "amount": -124293,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 17,
+      "ym": "2025-01",
+      "typeId": 1,
+      "amount": -1967049,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 18,
+      "ym": "2025-02",
+      "typeId": 1,
+      "amount": -1064615,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 19,
+      "ym": "2025-03",
+      "typeId": 1,
+      "amount": 2614491,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 35,
+      "ym": "2025-04",
+      "typeId": 1,
+      "amount": -188669,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 36,
+      "ym": "2025-05",
+      "typeId": 1,
+      "amount": 1369276,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 37,
+      "ym": "2025-06",
+      "typeId": 1,
+      "amount": 520493,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 38,
+      "ym": "2025-07",
+      "typeId": 1,
+      "amount": 888081,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 20,
+      "ym": "2025-08",
+      "typeId": 1,
+      "amount": 872594,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 21,
+      "ym": "2025-10",
+      "typeId": 1,
+      "amount": 1374997,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 22,
+      "ym": "2025-11",
+      "typeId": 1,
+      "amount": 7975576,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 23,
+      "ym": "2025-12",
+      "typeId": 1,
+      "amount": -293365,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 39,
+      "ym": "2026-01",
+      "typeId": 1,
+      "amount": 724581,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 40,
+      "ym": "2026-02",
+      "typeId": 1,
+      "amount": -5787269,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 41,
+      "ym": "2026-04",
+      "typeId": 1,
+      "amount": -5192173,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 1,
+      "ym": "2026-05",
+      "typeId": 1,
+      "amount": 853340,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 2,
+      "ym": "2026-07",
+      "typeId": 1,
+      "amount": 95761,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 3,
+      "ym": "2026-08",
+      "typeId": 1,
+      "amount": -297728,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    },
+    {
+      "id": 46,
+      "ym": "2026-11",
+      "typeId": 1,
+      "amount": -234076,
+      "note": "余额调整",
+      "accountId": null,
+      "auto": false
+    },
+    {
+      "id": 47,
+      "ym": "2026-11",
+      "typeId": 1,
+      "amount": -224821,
+      "note": "余额调整",
+      "accountId": null,
+      "auto": false
+    },
+    {
+      "id": 48,
+      "ym": "2026-11",
+      "typeId": 1,
+      "amount": 1990487,
+      "note": "（批量记录）",
+      "accountId": null,
+      "auto": true
+    }
+  ],
+  "loans": [
+    {
+      "id": 1,
+      "direction": "out",
+      "counterparty": "黄利素",
+      "amount": 1500000,
+      "settledAmount": 0,
+      "date": "2026-11-01",
+      "dueDate": null,
+      "accountId": null,
+      "note": null,
+      "createdAt": 1793543286
+    }
+  ],
+  "settings": [
+    {
+      "key": "groups",
+      "value": "[\"押金、理财、投资\"]"
+    }
+  ],
+  "meta": {
+    "snapshotCount": 225,
+    "entryCount": 44
+  }
+}

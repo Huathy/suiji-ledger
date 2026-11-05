@@ -71,3 +71,6 @@ desktop.ini
 .workbuddy-ai/
 .vscode/
 .idea/
+
+# ---------- APK 备用构建目录（SJ_BUILD_DIR） ----------
+mobile/build-*/

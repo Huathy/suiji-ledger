@@ -13,7 +13,9 @@
     "dev:web": "npm -w apps/web run dev",
     "build:web": "npm -w apps/web run build",
     "start": "npm -w apps/server run start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "m4a:migrate": "node apps/server/scripts/m4a-migrate.mjs",
+    "deps:desktop": "node apps/server/scripts/copy-desktop-deps.mjs"
   },
   "devDependencies": {
     "electron-builder": "^25.1.8",

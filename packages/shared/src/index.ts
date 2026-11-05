@@ -176,9 +176,11 @@ export const directionLabel: Record<Direction, string> = {
  * - groupOrder：账户分组的自定义顺序（问题 2）。账户本身已有 sort 字段，
  *   分组没有实体，故分组顺序存在设置里；没设置时沿用「按小计金额」顺序。
  * - groupSortMode：分组排序方式 total | name | custom
+ * - timeSortDir：全站时间排序方向 desc（倒序，默认）| asc（顺序），跟随账号同步
  */
 export const GROUP_ORDER_KEY = 'groupOrder'
 export const GROUP_SORT_MODE_KEY = 'groupSortMode'
+export const TIME_SORT_DIR_KEY = 'timeSortDir'
 
 /** 解析顺序数组设置值；非法/空返回 null（表示未自定义排序） */
 export function parseOrder(raw: string | undefined | null): string[] | null {
@@ -189,6 +191,54 @@ export function parseOrder(raw: string | undefined | null): string[] | null {
   } catch {
     return null
   }
+}
+
+/**
+ * 时间排序方向：desc = 倒序（新的在前，历史默认习惯）；asc = 顺序（旧的在前，便于顺着看增长）。
+ * 全站所有「按时间排」的列表（月份总表 / 账户历史 / 搜索结果 / 借还台账 / 回收站 /
+ * 月度变动构成）共用这一个语义，前端一个开关即可整体翻转。
+ */
+export type TimeSortDir = 'desc' | 'asc'
+
+/** 解析时间排序方向设置值；非法/缺失一律回退默认（desc，保持老行为） */
+export function parseTimeSortDir(raw: unknown): TimeSortDir {
+  return raw === 'asc' ? 'asc' : 'desc'
+}
+
+/** 翻转方向（点同一个表头在 倒序/顺序 间来回切） */
+export function flipTimeSortDir(dir: TimeSortDir): TimeSortDir {
+  return dir === 'asc' ? 'desc' : 'asc'
+}
+
+/**
+ * 按时间字段排序（不变更入参）。timeOf 返回可比较的时间键
+ * （'YYYY-MM' / 'YYYY-MM-DD' / epoch 毫秒或秒，字典序与数值序都与时间序一致）。
+ * 同一时间键内用 tieOf（一般是自增 id）作二次键：asc 时后记的在后、
+ * desc 时后记的在前，与后端 `orderBy: [{ ym: 'desc' }, { id: 'desc' }]` 同口径。
+ */
+export function sortByTime<T>(
+  list: readonly T[],
+  timeOf: (x: T) => string | number,
+  dir: TimeSortDir = 'desc',
+  tieOf?: (x: T) => number,
+): T[] {
+  const sign = dir === 'asc' ? 1 : -1
+  const out = list.slice()
+  out.sort((a, b) => {
+    const ta = timeOf(a)
+    const tb = timeOf(b)
+    let c: number
+    if (typeof ta === 'number' && typeof tb === 'number') c = ta - tb
+    else {
+      // 字符串键（YYYY-MM / YYYY-MM-DD）：按码位比较，字典序 == 时间序，且不受 locale 影响
+      const sa = String(ta)
+      const sb = String(tb)
+      c = sa < sb ? -1 : sa > sb ? 1 : 0
+    }
+    if (c === 0 && tieOf) c = tieOf(a) - tieOf(b)
+    return c * sign
+  })
+  return out
 }
 
 /**
@@ -203,4 +253,113 @@ export function applyOrder<T>(list: T[], keyOf: (x: T) => string | number, order
   for (const x of list) (rank.has(String(keyOf(x))) ? known : rest).push(x)
   known.sort((a, b) => rank.get(String(keyOf(a)))! - rank.get(String(keyOf(b)))!)
   return [...known, ...rest]
+}
+
+// ===================== M4 Git 同步：跨端契约（§8） =====================
+//
+// 这些形状以前在 `apps/server/src/sync/sync.service.ts`、`apps/web/src/views/SyncView.vue`、
+// `apps/web/src/components/SyncBadge.vue`、`apps/web/src/components/SyncConflictDialog.vue`
+// 各抄过一份，字段数还不一样（SyncBadge 少 5 个、ConflictItem 与后端手写版不同步）。
+// 契约只有一个家：这里。改后端形状时 TS 会同时在 PC/移动端报错，不会静默漂移。
+
+/** `/system/sync/status` 的 `state` 取值（§8.1 状态机） */
+export type SyncState = 'unconfigured' | 'idle' | 'syncing' | 'offline' | 'conflict' | 'error' | 'halted'
+
+/** 同步记录类型：由文件名前缀编码（§3；server 侧 `PREFIX_KIND` 是同一套值的映射） */
+export type SyncRecordKind = 'entry' | 'account' | 'snapshot' | 'loan' | 'type' | 'setting'
+
+/** 冲突裁决：整条记录 / 单个字段以哪一端为准（§5.6 两个层次） */
+export type SyncPick = 'local' | 'remote'
+
+/** 冲突成因：both=两端都改 · edit-delete=一端删一端改 · unparsable=载体不可解析 · encrypted=加密仓不可合并 */
+export type SyncConflictType = 'both' | 'edit-delete' | 'unparsable' | 'encrypted'
+
+/** 字段级对照的一行（§5.6.2） */
+export type SyncFieldDiff = {
+  name: string
+  label: string
+  base: string | null
+  local: string | null
+  remote: string | null
+  /**
+   * both 才需要人判断；local/remote 只有一端动过（界面锁定）；
+   * same 两侧取值一致，没有任何需要裁决的东西。
+   */
+  changed: 'both' | 'local' | 'remote' | 'same'
+}
+
+/** 冲突界面的一条（§5.6.1） */
+export type SyncConflictItem = {
+  key: string
+  fileName: string
+  kind: SyncRecordKind | null
+  title: string
+  conflictType: SyncConflictType
+  base: string | null
+  local: string | null
+  remote: string | null
+  fields: SyncFieldDiff[]
+  recommend: SyncPick
+  reason: string
+}
+
+/**
+ * 单端改动字段的锁定侧（§5.6.2 第 2 条）：`changed==='local'|'remote'` 锁定到动过那端，
+ * `both`/`same` 返回 null（前者交人判断、后者无需裁决）。
+ *
+ * 为什么这条规则必须放 shared：前端画置灰箭头、后端做 payload 清洗都靠它，
+ * 两边各写一遍就会出现"界面锁住了但后端仍接受反向覆盖"这种只在一端成立的错觉。
+ */
+export function lockedSideOf(changed: SyncFieldDiff['changed']): SyncPick | null {
+  if (changed === 'local') return 'local'
+  if (changed === 'remote') return 'remote'
+  return null
+}
+
+/** 一条冲突里全部锁定字段：字段名 → 强制取值（前端画锁、后端清洗共用） */
+export function lockedFields(fields: readonly SyncFieldDiff[]): Record<string, SyncPick> {
+  const out: Record<string, SyncPick> = {}
+  for (const f of fields) {
+    const side = lockedSideOf(f.changed)
+    if (side) out[f.name] = side
+  }
+  return out
+}
+
+/**
+ * 单个字段的生效取值（字段级优先于记录级，§5.6 第 1 条）：
+ * 锁定字段恒取动过那端；其余按 fieldPicks → 整条 pick → 'local' 兜底。
+ */
+export function effectiveFieldPick(
+  pick: SyncPick,
+  field: string,
+  fields: readonly SyncFieldDiff[],
+  fieldPicks?: Record<string, SyncPick> | null,
+): SyncPick {
+  const f = fields.find((x) => x.name === field)
+  const locked = f ? lockedSideOf(f.changed) : null
+  if (locked) return locked
+  return fieldPicks?.[field] || pick
+}
+
+/** 冲突对这个上下文的展示信息 + 后端返回的附带字段（§8.1） */
+export type SyncStatus = {
+  state: SyncState
+  pendingCommits: number
+  lastSyncAt: number | null
+  lastError: string | null
+  conflictCount: number
+  pushMode: string
+  mergeEnabled: boolean
+  encrypt: boolean
+  /** §6.1 preflight 的运行态：whole-file = 合并已关/加密已开，冲突一律整份二选一 */
+  mode?: 'merge' | 'whole-file'
+  retries: number
+  nextRetryAt: number | null
+  /** 自动重试已停手的时刻（秒）；state=halted 时非空 */
+  haltedAt?: number | null
+  /** 后端自动重试上限，文案引用它，前端不另抄一份数字 */
+  maxAutoRetries?: number
+  /** 本地 head 的 oid（调试/支持用，界面不展示） */
+  lastCommitOid?: string | null
 }
