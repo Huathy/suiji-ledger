@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ConfigProvider, Tabbar, TabbarItem } from 'vant'
 import { useUiStore } from './stores/ui'
@@ -20,6 +20,20 @@ onMounted(() => {
   ui.listen()
   auth.bootstrap()
 })
+
+// 登录后把服务端保存的「时间排序方向」拉下来对齐一次（离线模式即本地库，同样走这条）。
+// 用 flag 保证只拉一次：刚登录时 auth.ready 可能已为 true，靠 route.path 变化补触发。
+let timeSortPulled = false
+watch(
+  () => [auth.ready, route.path] as const,
+  ([ready, path]) => {
+    if (timeSortPulled || !ready || path === '/login') return
+    if (!auth.authed()) return
+    timeSortPulled = true
+    ui.pullTimeSort()
+  },
+  { immediate: true },
+)
 
 // 未登录（且非离线模式）时不渲染数据页与侧栏
 const showNav = computed(() => route.path !== '/login' && auth.ready && auth.authed())

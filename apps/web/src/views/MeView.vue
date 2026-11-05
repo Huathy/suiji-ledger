@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NavBar, Field, CellGroup, Button, Dialog, showSuccessToast, showConfirmDialog, RadioGroup, Radio, Switch } from 'vant'
 import { api, downloadFile, OFFLINE, saveTextFile, pickTextFile } from '../api/client'
-import { fileStamp, stampText } from '../../../../packages/shared/src/index'
+import { fileStamp, stampText, sortByTime } from '../../../../packages/shared/src/index'
 import { useUiStore } from '../stores/ui'
 import { useAuthStore } from '../stores/auth'
 
@@ -54,7 +54,9 @@ async function exportXlsx() {
   const XLSX = await import('xlsx')
   const m = await api<any>('/system/matrix?limit=120')
   const head = ['月份', '记录日', ...m.accounts.map((a: any) => `${a.emoji}${a.name}${a.kind === 'liability' ? '(欠)' : ''}`), '总资产', '净资产', '结余', '日均开销(估)']
-  const rows = m.rows.map((r: any) => [
+  // 行序与页面/CSV 一致：倒序=最新月份在前，顺序=最早月份在前
+  const ordered = sortByTime(m.rows, (r: any) => r.ym, ui.timeSort)
+  const rows = ordered.map((r: any) => [
     r.ym, r.recordDate,
     ...r.cells.map((v: any) => (v === null ? '' : Number((v / 100).toFixed(2)))),
     Number((r.assetsTotal / 100).toFixed(2)), Number((r.networth / 100).toFixed(2)),
@@ -98,7 +100,8 @@ async function exportBackup() {
   await downloadFile('/system/backup', name)
 }
 async function exportCsv() {
-  await downloadFile('/system/matrix.csv', `suiji-ledger-balance-sheet-${fileStamp()}.csv`)
+  // 行序跟随全站时间排序方向（服务端与离线端都按 dir 排好再导出）
+  await downloadFile('/system/matrix.csv?dir=' + ui.timeSort, `suiji-ledger-balance-sheet-${fileStamp()}.csv`)
 }
 
 /** 离线模式：走系统文件选择器；服务端模式：网页文件输入 */
@@ -128,6 +131,9 @@ async function doRestore(text: string) {
   })
   const r = await api<{ imported: number }>('/system/restore', { method: 'POST', body: { mode: restoreMode.value, data } })
   showSuccessToast(`恢复完成，导入 ${r.imported} 条快照`)
+  // 恢复是整库级变更，各视图的统计/列表都在 onMounted 时取过一次，
+  // 不重载会继续显示恢复前的旧数据（离线端尤其明显：本地库已换，内存里还是旧的）
+  setTimeout(() => window.location.reload(), 700)
 }
 
 async function logout() {
@@ -175,8 +181,10 @@ async function logout() {
       <div class="menu-line" @click="router.push('/search')"><span>🔍</span>搜索记录<span class="arr">›</span></div>
       <div class="menu-line" @click="router.push('/recycle')"><span>🗑</span>回收站<span class="arr">›</span></div>
     </div>
-    <div v-if="OFFLINE" style="font-size: 10.5px; color: var(--t3); margin: 8px 18px 0; line-height: 1.7">
-      📱 离线模式：数据保存在本机应用内。卸载或清除应用数据会丢失，请定期「导出全量备份 JSON」。
+    <div v-if="OFFLINE" style="font-size: 10.5px; color: var(--t3); margin: 8px 18px 0; line-height: 1.8">
+      📱 <b>离线模式</b>：数据只存在本机应用内，不联网、不与电脑自动同步。卸载或清除应用数据即丢失，请定期「导出全量备份 JSON」。<br />
+      🔁 <b>与电脑互搬数据</b>：手机「导出全量备份 JSON」→ 文件落在 <span class="num">下载/SuijiLedger/</span> → 传到电脑后在「从备份恢复」里选中它；电脑搬手机同理。<br />
+      ⚖️ <b>覆盖 / 合并</b>：「覆盖」清空本机后整库替换；「合并」按「账户名+性质」归并，同月快照以备份为准——两边都记过账就用「合并」。
     </div>
 
     <div class="grp-label">外观与提醒</div>
@@ -199,6 +207,14 @@ async function logout() {
         <RadioGroup v-model="reminderOn" direction="horizontal" style="margin-left: auto; transform: scale(.9)" @update:model-value="saveReminderEnabled">
           <Radio name="on">开</Radio>
           <Radio name="off">关</Radio>
+        </RadioGroup>
+      </div>
+      <div class="menu-line" style="flex-wrap: wrap">
+        <span>🔀</span>时间排序
+        <span class="hint-inline">全站按时间排的列表：总表/账户历史/搜索/借还/回收站/变动构成</span>
+        <RadioGroup :model-value="ui.timeSort" direction="horizontal" style="margin-left: auto; transform: scale(.9)" @update:model-value="(v: any) => ui.setTimeSort(v)">
+          <Radio name="desc">倒序（新→旧）</Radio>
+          <Radio name="asc">顺序（旧→新）</Radio>
         </RadioGroup>
       </div>
       <div class="menu-line" style="flex-wrap: wrap">

@@ -11,7 +11,9 @@ import SyncBadge from '../components/SyncBadge.vue'
 
 interface AccountRow { id: number; name: string; emoji: string; kind: string; group: string | null; archived: boolean; balance: number; initBalance: number; prevBalance?: number }
 interface TypeInfo { id: number; name: string; emoji: string; direction: Direction; builtin: boolean; usageCount: number }
-interface BigItem { typeId: number; amount: string; note: string }
+// uid：同步用的跨设备主键。平账是「全量保存」语义，但必须按 uid 做 diff 而不是删光重建，
+// 否则对端会把「我改了列表」读成「删光 + 新增一堆」，制造满屏假冲突（方案 §3.2）
+interface BigItem { uid?: string; typeId: number; amount: string; note: string }
 
 const router = useRouter()
 const route = useRoute()
@@ -125,7 +127,9 @@ async function init(targetYm: string) {
   const [accs, ts, months] = await Promise.all([
     api<AccountRow[]>('/accounts'),
     api<TypeInfo[]>('/types'),
-    api<{ months: { ym: string; recordDate: string }[] }>('/months?limit=120'),
+    // 这里钉死 dir=desc：下面的「上一点 = pts[idx+1]」依赖「近的在前」，
+    // 不能跟随全站时间排序开关，否则区间基线会取错月份。
+    api<{ months: { ym: string; recordDate: string }[] }>('/months?limit=120&dir=desc'),
   ])
   accounts.value = accs.filter((a) => !a.archived)
   types.value = ts
@@ -147,7 +151,7 @@ async function init(targetYm: string) {
     inputs.value = pre
     bigItems.value = (detail.entries || [])
       .filter((e: any) => !e.auto)
-      .map((e: any) => ({ typeId: e.typeId, amount: fromCents(e.amount), note: e.note || '' }))
+      .map((e: any) => ({ uid: e.uid, typeId: e.typeId, amount: fromCents(e.amount), note: e.note || '' }))
     batchNote.value = detail.autoEntry?.note || '（批量记录）'
   } else {
     recordDate.value = clampToMonth(targetYm, todayYMD())
@@ -259,7 +263,8 @@ function saveItem() {
   if (!t) return
   const cents = toCents(itemAmount.value || '0')
   if (cents === null || cents === 0) return
-  const item: BigItem = { typeId: t.id, amount: itemAmount.value, note: itemNote.value }
+  const prevUid = itemEditIdx.value >= 0 ? bigItems.value[itemEditIdx.value]?.uid : undefined
+  const item: BigItem = { uid: prevUid, typeId: t.id, amount: itemAmount.value, note: itemNote.value }
   if (itemEditIdx.value >= 0) bigItems.value.splice(itemEditIdx.value, 1, item)
   else bigItems.value.push(item)
   itemShow.value = false
@@ -287,7 +292,7 @@ async function save() {
     .map((a) => ({ accountId: a.id, balance: toCents(inputs.value[a.id])! }))
   if (balances.length === 0) return
   const bigItemsPayload = bigItems.value
-    .map((it) => ({ typeId: it.typeId, amount: toCents(it.amount || '0')!, note: it.note || undefined }))
+    .map((it) => ({ uid: it.uid, typeId: it.typeId, amount: toCents(it.amount || '0')!, note: it.note || undefined }))
     .filter((x) => !Number.isNaN(x.amount))
   saving.value = true
   try {

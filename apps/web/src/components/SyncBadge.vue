@@ -1,48 +1,38 @@
 <script setup lang="ts">
 /**
- * 同步状态徽标（设计稿 v2.1 §6 SyncBadge）：
- * 绿=已同步 · 黄=待推送/待启用 · 灰=未配置 · 红=失败
- * M4 推送引擎未交付，故只会出现 灰/黄 两态，且 tooltip 明确说明，不做假状态。
+ * 同步状态徽标（设计稿 v2.1 §6 SyncBadge）
+ * 绿=已同步 · 黄=待推送/离线/同步中 · 红=冲突/失败 · 灰=未配置
+ *
+ * 状态 → 文案/圆点/提示的映射只住在 `utils/syncState.ts`（`BADGE_COPY` / `badgeTip`）：
+ * 以前这里三段 if 级联 + SyncView 两份内联表各算一遍，加一个状态必然漏
+ * （v1.2 就漏过 `ok`/`fail` 的 dot 映射，红/绿两态永远显示不出来）。
+ * 状态形状也不再手抄：`SyncStatus` 只有一个家在 `packages/shared`——
+ * 本文件当年抄的版本少了 5 个字段，正是漂移的证据。
  */
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
+import { type SyncStatus } from '../../../../packages/shared/src/index'
+import { BADGE_COPY, badgeTip, resolveBadgeState } from '../utils/syncState'
 
 const props = withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 const router = useRouter()
-const remote = ref('')
-const pushMode = ref('daily')
-const loaded = ref(false)
+const st = ref<SyncStatus | null>(null)
+const failed = ref(false)
 
 onMounted(async () => {
   try {
-    const s = await api<{ settings: Record<string, string> }>('/system/settings')
-    remote.value = s.settings.gitRemote || ''
-    pushMode.value = s.settings.gitPushMode || 'daily'
+    st.value = await api<SyncStatus>('/system/sync/status')
   } catch {
-    remote.value = ''
-  } finally {
-    loaded.value = true
+    failed.value = true // 离线/未登录：降级为未配置，不白屏
   }
 })
 
-const state = computed(() => (!loaded.value ? 'loading' : remote.value ? 'pending' : 'unconfigured'))
-const label = computed(
-  () =>
-    ({
-      loading: '检测中',
-      unconfigured: '未配置同步',
-      pending: '已配置 · 待 M4 推送',
-      ok: '已同步',
-      fail: '同步失败',
-    }[state.value]),
-)
-const dotClass = computed(() => (state.value === 'unconfigured' ? 'dot-gray' : state.value === 'pending' ? 'dot-amber' : 'dot-gray'))
-const tip = computed(() =>
-  state.value === 'unconfigured'
-    ? '尚未配置远程仓库。当前请在「我的 → 导出全量备份 JSON」手动备份。'
-    : '已填写远程仓库，自动 commit / push 引擎将在 M4 里程碑交付。',
-)
+const state = computed(() => resolveBadgeState(st.value, { failed: failed.value }))
+
+const label = computed(() => BADGE_COPY[state.value].label)
+const dotClass = computed(() => BADGE_COPY[state.value].dot)
+const tip = computed(() => badgeTip(state.value, st.value))
 </script>
 
 <template>

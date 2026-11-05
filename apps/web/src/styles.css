@@ -213,3 +213,16 @@ html.dark .remind { background: #332a18; border-color: #55431f; color: #e8b45a; 
   .van-picker-column:active { cursor: grabbing; }
   .van-picker-column__item { cursor: pointer; }
 }
+
+/* 时间排序方向开关：所有按时间排的列表页共用（总表/历史/搜索/借还/回收站/月度详情）。
+   .sec-t 本身是 flex，hint 已 margin-left:auto，故按钮默认贴右；无 hint 时自己贴右。 */
+.dir-pill {
+  border: 1px solid var(--line); background: var(--cell); color: var(--t2);
+  font-size: 11px; font-family: inherit; border-radius: 12px; padding: 4px 10px;
+  cursor: pointer; min-height: 28px; white-space: nowrap; flex-shrink: 0;
+}
+.dir-pill + .dir-pill { margin-left: 0; }
+.sec-t > .dir-pill:first-child { margin-left: auto; }
+.dir-pill:hover { color: var(--brand); border-color: var(--brand); }
+.dir-pill.on { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 600; }
+html.dark .dir-pill.on { color: #0b1220; }

@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Field, CellGroup, Button, showToast } from 'vant'
 import { useAuthStore } from '../stores/auth'
-import { getServerBase, setServerBase } from '../api/client'
+import { getServerBase, setServerBase, OFFLINE } from '../api/client'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -49,11 +49,15 @@ async function submit() {
       <CellGroup inset style="margin-top: 28px">
         <Field v-model="pwd" type="password" label="口令" placeholder="访问口令" @keyup.enter="submit" />
         <Field v-if="mode === 'setup'" v-model="pwd2" type="password" label="确认" placeholder="再输入一次" @keyup.enter="submit" />
-        <Field v-model="server" label="服务器" placeholder="留空 = 本机同源部署"
+        <!-- 离线版（APK）没有服务端：api() 直接走 localHandle，这个地址填了也无效，隐藏避免误导 -->
+        <Field v-if="!OFFLINE" v-model="server" label="服务器" placeholder="留空 = 本机同源部署"
           @update:model-value="serverTouched = true" right-icon="setting-o" />
       </CellGroup>
-      <div class="login-note">
+      <div v-if="!OFFLINE" class="login-note">
         App 使用时填电脑地址，如 http://192.168.10.5:3000；浏览器访问同机部署可留空。
+      </div>
+      <div v-else class="login-note">
+        离线版：数据保存在本机，无需服务器。
       </div>
       <div style="margin: 20px 0">
         <Button type="primary" round block :loading="loading" @click="submit">

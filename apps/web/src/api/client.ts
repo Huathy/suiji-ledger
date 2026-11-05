@@ -128,7 +128,9 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
 export async function downloadFile(path: string, filename: string) {
   if (OFFLINE) {
     if (path.includes('matrix.csv')) {
-      const { csv } = await api<{ csv: string }>('/system/matrix.csv')
+      // 查询串（dir=asc|desc）在离线端同样生效：CSV 行序跟随全站时间排序方向
+      const qs = path.includes('?') ? '?' + path.split('?')[1] : ''
+      const { csv } = await api<{ csv: string }>('/system/matrix.csv' + qs)
       await saveTextFile(filename, csv)
     }
     return

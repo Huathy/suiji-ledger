@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { NavBar, Button, Empty, showConfirmDialog, showSuccessToast, Dialog } from 'vant'
 import { api } from '../api/client'
+import { sortByTime } from '../../../../packages/shared/src/index'
 import { useGoBack } from '../utils/nav'
+import { useUiStore } from '../stores/ui'
 
 interface TrashRow { id: number; kind: 'entry' | 'loan' | 'account'; summary: string; deletedAt: number; payload: any }
 
 const goBack = useGoBack()
+const ui = useUiStore()
 const items = ref<TrashRow[]>([])
 const loaded = ref(false)
+
+/** 展示顺序跟随全站时间排序开关（不重新请求，直接按 deletedAt 重排） */
+const sorted = computed(() => sortByTime(items.value, (t) => t.deletedAt, ui.timeSort, (t) => t.id))
 
 const kindName: Record<string, string> = { entry: '变动条目', loan: '借还记录', account: '账户' }
 const kindEmoji: Record<string, string> = { entry: '📝', loan: '🤝', account: '🏦' }
 
 async function load() {
-  const r = await api<{ items: TrashRow[] }>('/recycle')
+  const r = await api<{ items: TrashRow[] }>('/recycle?dir=' + ui.timeSort)
   items.value = r.items
   loaded.value = true
 }
@@ -58,11 +64,15 @@ function payloadLine(it: TrashRow): string {
         <button v-if="items.length" class="link-btn danger" @click="clearAll">清空</button>
       </template>
     </NavBar>
-    <div style="font-size: 11px; color: var(--t3); margin: 8px 18px 0; line-height: 1.7">
-      删除的大项、借还记录、账户都会先进入这里，可恢复或永久删除。账户因有历史快照而走「归档」的，不经过回收站。
+    <div class="recycle-bar">
+      <span style="font-size: 11px; color: var(--t3); line-height: 1.7">
+        删除的大项、借还记录、账户都会先进入这里，可恢复或永久删除。账户因有历史快照而走「归档」的，不经过回收站。
+      </span>
+      <button v-if="items.length" type="button" class="dir-pill" :title="ui.timeSort === 'asc' ? '改为按删除时间倒序（刚删的在前）' : '改为按删除时间顺序（最早删的在前）'"
+        @click="ui.toggleTimeSort()">{{ ui.timeSort === 'asc' ? '删除时间 ↑ 顺序' : '删除时间 ↓ 倒序' }}</button>
     </div>
     <div class="card" style="padding: 4px 14px" v-if="items.length">
-      <div v-for="it in items" :key="it.id" class="row-line">
+      <div v-for="it in sorted" :key="it.id" class="row-line">
         <span class="cicon">{{ kindEmoji[it.kind] || '🗑' }}</span>
         <div style="flex: 1; min-width: 0">
           <div style="font-size: 13px; color: var(--t1)">
@@ -82,6 +92,8 @@ function payloadLine(it: TrashRow): string {
 </template>
 
 <style>
+.recycle-bar { display: flex; align-items: center; gap: 10px; margin: 8px 18px 0; }
+.recycle-bar .dir-pill { margin-left: auto; flex-shrink: 0; }
 .kind-tag { font-size: 9px; color: var(--brand); background: var(--focus-bg); border-radius: 4px; padding: 1px 5px; margin-right: 4px; }
 .link-btn {
   border: none; background: transparent; cursor: pointer; font: inherit;

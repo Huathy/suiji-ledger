@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { NavBar, Popup, Field, CellGroup, Button, Picker, showConfirmDialog, showSuccessToast, showFailToast } from 'vant'
 import { saveTextFile } from '../api/client'
 import { api } from '../api/client'
-import { toCents, fromCents, type Direction } from '../../../../packages/shared/src/index'
+import { toCents, fromCents, sortByTime, type Direction } from '../../../../packages/shared/src/index'
 import { money, deltaClass } from '../utils/money'
 import { useUiStore } from '../stores/ui'
 import { useGoBack } from '../utils/nav'
@@ -13,7 +13,7 @@ interface Detail {
   ym: string; recordDate: string | null; reconciled: boolean
   accounts: { id: number; name: string; emoji: string; kind: string; group: string | null; balance: number | null; prevBalance: number; delta: number | null }[]
   networth: number; delta: number | null; assetsTotal: number; liabilityTotal: number
-  entries: { id: number; name: string; emoji: string; direction: string; amount: number; note: string | null; accountName: string | null; auto: boolean }[]
+  entries: { id: number; ym: string; name: string; emoji: string; direction: string; amount: number; note: string | null; accountName: string | null; auto: boolean }[]
   bigTotal: number; incomeTotal: number; autoEntry: { id: number; amount: number; note?: string | null } | null
   interval: { fromDate: string; toDate: string; days: number; delta: number; incomeTotal: number; spendEst: number; dailyAvg: number; dailyNet: number; estimated: boolean } | null
 }
@@ -60,6 +60,17 @@ const autoRows = computed(() => {
   const d = detail.value
   if (!d) return []
   return d.accounts.filter((a) => a.balance !== null && a.delta !== null && a.delta !== 0)
+})
+
+/**
+ * 本月变动构成（大项）：同月条目没有独立日期，记录序号 id 即录入先后，
+ * 故倒序 = 最近录入的在前，顺序 = 最早录入的在前，与搜索页/借还页同一口径。
+ * 合计与恒等式不受排序影响（只求和）。
+ */
+const bigEntries = computed(() => {
+  const d = detail.value
+  if (!d) return []
+  return sortByTime(d.entries.filter((x) => !x.auto), (e) => e.ym, ui.timeSort, (e) => e.id)
 })
 
 function openEdit(e: Detail['entries'][number] & { typeId?: number }) {
@@ -140,7 +151,8 @@ async function shareImage() {
   ctx.fillText('变动构成', 60, y)
   y += 70
   ctx.font = '32px system-ui'
-  for (const e of d.entries.slice(0, 8)) {
+  // 分享图沿用「全部条目（含自动平账）按同一时间方向排」，与页面列表方向一致
+  for (const e of sortByTime(d.entries, (x) => x.ym, ui.timeSort, (x) => x.id).slice(0, 8)) {
     ctx.fillStyle = '#646a73'
     ctx.fillText(`${e.emoji} ${e.name}${e.note ? '（' + e.note + '）' : ''}`, 60, y)
     ctx.fillStyle = e.amount >= 0 ? '#00b578' : '#f04848'
@@ -237,8 +249,11 @@ async function removeEntry(id: number) {
 
     <!-- 变动构成 -->
     <div class="card" style="padding: 6px 14px 10px">
-      <div class="sec-t" style="padding: 10px 2px 6px">本月变动构成 <span class="hint">Σ条目 = Σ余额变动，永远平</span></div>
-      <div v-for="e in detail.entries.filter((x) => !x.auto)" :key="e.id" class="row-line" style="cursor: pointer" @click="openEdit(e as any)">
+      <div class="sec-t" style="padding: 10px 2px 6px">本月变动构成 <span class="hint">Σ条目 = Σ余额变动，永远平</span>
+        <button type="button" class="dir-pill" :title="ui.timeSort === 'asc' ? '改为录入时间倒序（最近录入在前）' : '改为录入时间顺序（最早录入在前）'"
+          @click="ui.toggleTimeSort()">{{ ui.timeSort === 'asc' ? '↑ 顺序' : '↓ 倒序' }}</button>
+      </div>
+      <div v-for="e in bigEntries" :key="e.id" class="row-line" style="cursor: pointer" @click="openEdit(e as any)">
         <span class="cicon" style="width: 32px; height: 32px; font-size: 15px">{{ e.emoji }}</span>
         <div style="flex: 1; min-width: 0">
           <div style="font-size: 13px; font-weight: 500">{{ e.name }}</div>

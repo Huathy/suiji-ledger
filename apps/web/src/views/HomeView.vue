@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from 'vant'
 import { api } from '../api/client'
-import { todayYMD, fmtPct } from '../../../../packages/shared/src/index'
+import { todayYMD, fmtPct, sortByTime } from '../../../../packages/shared/src/index'
 import SparkLine from '../components/SparkLine.vue'
 import BalanceSheet from '../components/BalanceSheet.vue'
 import SyncBadge from '../components/SyncBadge.vue'
@@ -25,7 +25,7 @@ interface MonthDetail {
   accounts: { id: number; name: string; emoji: string; kind: string; group: string | null; balance: number | null; prevBalance: number; delta: number | null }[]
   networth: number; prevNetworth: number | null; delta: number | null
   assetsTotal: number; liabilityTotal: number
-  entries: { id: number; name: string; emoji: string; direction: string; amount: number; note: string | null; accountName: string | null; auto: boolean }[]
+  entries: { id: number; ym: string; name: string; emoji: string; direction: string; amount: number; note: string | null; accountName: string | null; auto: boolean }[]
   bigTotal: number; incomeTotal: number; autoEntry: { amount: number } | null
   interval: { fromDate: string; toDate: string; days: number; delta: number; incomeTotal: number; spendEst: number; dailyAvg: number; dailyNet: number; estimated: boolean } | null
 }
@@ -40,7 +40,9 @@ const loading = ref(true)
 
 onMounted(async () => {
   const [m, s, sum] = await Promise.all([
-    api<{ months: MonthPoint[] }>('/months?limit=12'),
+    // dir 钉死 desc：总览的「本月卡片 / 上次记录日 / 迷你走势」都以 months[0]=最近月 为前提，
+    // 全站时间排序开关只翻转「近几月」卡片的显示顺序，不动这个取数口径。
+    api<{ months: MonthPoint[] }>('/months?limit=12&dir=desc'),
     api<{ settings: Record<string, string> }>('/system/settings'),
     api<Summary>('/stats/summary').catch(() => null),
   ])
@@ -84,8 +86,12 @@ const needReconcile = computed(() => {
   return false
 })
 const spark = computed(() => months.value.slice(0, 8).reverse().map((m) => m.networth))
-const topEntries = computed(() => (detail.value?.entries || []).slice(0, 4))
-const recentMonths = computed(() => months.value.slice(1, 4))
+/** 本月大项 Top4：按全站时间方向取前 4 条（倒序=最近录入的 4 条，顺序=最早录入的 4 条） */
+const topEntries = computed(() =>
+  sortByTime(detail.value?.entries || [], (e: any) => e.ym, ui.timeSort, (e: any) => e.id).slice(0, 4),
+)
+/** 近几月卡片：/months 恒为「近的在前」（总览的当期口径靠它取 months[0]），这里只翻显示顺序 */
+const recentMonths = computed(() => sortByTime(months.value.slice(1, 4), (m) => m.ym, ui.timeSort))
 
 /** PC 指标卡（问题 5）：环比 / 同比 / 日均开销增减 / 日均净结余 */
 const kpis = computed(() => {

@@ -14,6 +14,10 @@ import {
   yoyYm,
   YM_RE,
   YMD_RE,
+  parseTimeSortDir,
+  sortByTime,
+  type SyncStatus,
+  type TimeSortDir,
 } from '../../../../packages/shared/src/index'
 
 // ---------- 数据模型 ----------
@@ -53,7 +57,8 @@ interface Db {
 const KEY = 'mr_local_db_v1'
 const DEFAULT_SETTINGS: Record<string, string> = {
   theme: 'auto', reminderDay: '28', baseCurrency: 'CNY',
-  gitRemote: '', gitBranch: 'main', gitAuth: '', gitPushMode: 'daily', gitEncrypt: 'off',
+  gitRemote: '', gitBranch: 'main', gitAuth: '', gitAuthUser: '', gitPushMode: 'daily', gitEncrypt: 'off',
+  gitMergeEnabled: 'on', gitAutoCommit: 'on',
 }
 
 function freshDb(): Db {
@@ -279,11 +284,13 @@ function matrix(limit = 24) {
   })
   return { accounts: accounts.map((a) => ({ id: a.id, name: a.name, emoji: a.emoji, kind: a.kind })), rows }
 }
-function matrixCsv(): string {
+/** 与服务端 matrixCsv 同口径：dir 只翻行序（倒序=最新月份在前 / 顺序=最早在前），表头与列不变 */
+function matrixCsv(dir: TimeSortDir = 'desc'): string {
   const m = matrix(120)
+  const ordered = sortByTime(m.rows, (r) => r.ym, dir)
   const head = ['月份', '记录日', ...m.accounts.map((a) => `${a.emoji}${a.name}${a.kind === 'liability' ? '(欠)' : ''}`), '总资产', '净资产', '结余', '日均开销(估)']
   const lines = [head.join(',')]
-  for (const r of m.rows) {
+  for (const r of ordered) {
     const daily = r.dailyAvg === null ? '' : fromCents(r.dailyAvg) + (r.estimated ? '*' : '')
     lines.push([
       r.ym, r.recordDate,
@@ -299,6 +306,20 @@ function matrixCsv(): string {
 }
 
 // ---------- 路由处理 ----------
+
+/**
+ * `path` 里的查询参数；无 `?` 或空 query 返回空实例（11 处各抄一遍的 `path.split('?')[1] || ''` 收到这里）。
+ *
+ * 这是纯收敛，**不是**顺手修 bug，所以两条原有行为要原样保留（改它等于改语义，必须单独记账）：
+ * - query 里再出现 `?` 时只取第一个 `?` 之后的那一段（`split` 的第二段），`a=1?b=2` 解析成 `a=1`。
+ *   换成 `indexOf` + `slice(indexOf('?') + 1)` 会把后半截一起吃掉，与原行为不等价。
+ * - `#hash` 不剥离：上面 `localHandle` 的 `path.split('?')[0]` 也不处理 hash，全文件一路都不处理。
+ *   哪天某个路由真的需要处理 hash，在那个路由里显式写，别在这里静默加分支。
+ */
+function queryOf(path: string): URLSearchParams {
+  const parts = path.split('?')
+  return new URLSearchParams(parts.length > 1 ? parts[1] : '')
+}
 
 export async function localHandle(method: string, path: string, body?: any): Promise<any> {
   // 剥离查询串后再按段路由；p1=资源, p2=:id, p3=子资源, p4=:id
@@ -407,9 +428,11 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 月份与平账 ----
   if (p1 === 'months' && m === 'GET') {
-    const limit = Math.min(120, Number(new URLSearchParams(path.split('?')[1] || '').get('limit')) || 60)
-    const pts = pointsAsc().reverse().slice(0, limit)
-    return { months: pts }
+    const qs = queryOf(path)
+    const limit = Math.min(120, Number(qs.get('limit')) || 60)
+    // 与服务端同语义：limit 始终取「最近的 N 个月」，dir 只决定排列方向
+    const picked = pointsAsc().reverse().slice(0, limit)
+    return { months: parseTimeSortDir(qs.get('dir')) === 'asc' ? picked.slice().reverse() : picked }
   }
   if (p1 === 'month' && p2 && m === 'GET' && !p3) return monthDetail(p2)
   if (p1 === 'reconcile' && m === 'POST') {
@@ -557,7 +580,8 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 借入借出台账 ----
   if (p1 === 'loans' && m === 'GET' && !p2) {
-    const view = db.loans.slice().sort((a, b) => b.id - a.id).map((l) => ({
+    const dir = parseTimeSortDir(queryOf(path).get('dir'))
+    const view = sortByTime(db.loans, (l) => l.date, dir, (l) => l.id).map((l) => ({
       ...l,
       remaining: l.amount - l.settledAmount,
       status: l.settledAmount >= l.amount ? 'settled' : l.settledAmount > 0 ? 'partial' : 'open',
@@ -639,7 +663,8 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 回收站 ----
   if (p1 === 'recycle' && m === 'GET' && !p2) {
-    return { items: db.trash.slice().sort((a, b) => b.deletedAt - a.deletedAt) }
+    const dir = parseTimeSortDir(queryOf(path).get('dir'))
+    return { items: sortByTime(db.trash, (t) => t.deletedAt, dir, (t) => t.id) }
   }
   if (p1 === 'recycle' && p2 && p3 === 'restore' && m === 'POST') {
     const item = db.trash.find((t) => t.id === Number(p2))
@@ -669,20 +694,25 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 跨月搜索 ----
   if (p1 === 'search' && m === 'GET') {
-    const qs = new URLSearchParams(path.split('?')[1] || '')
+    const qs = queryOf(path)
     const kw = (qs.get('q') || '').trim()
+    const dir: TimeSortDir = parseTimeSortDir(qs.get('dir'))
     const min = qs.get('minYuan') ? Math.round(Number(qs.get('minYuan')) * 100) : null
     const max = qs.get('maxYuan') ? Math.round(Number(qs.get('maxYuan')) * 100) : null
-    const results = db.entries
-      .filter((e) => !e.auto)
-      .filter((e) => (min === null || e.amount >= min) && (max === null || e.amount <= max))
-      .filter((e) => {
-        if (!kw) return true
-        const t = db.types.find((x) => x.id === e.typeId)
-        const acc = e.accountId ? db.accounts.find((x) => x.id === e.accountId) : null
-        return (e.note || '').includes(kw) || (t?.name || '').includes(kw) || (acc?.name || '').includes(kw)
-      })
-      .sort((a, b) => b.ym.localeCompare(a.ym) || b.id - a.id)
+    const results = sortByTime(
+      db.entries
+        .filter((e) => !e.auto)
+        .filter((e) => (min === null || e.amount >= min) && (max === null || e.amount <= max))
+        .filter((e) => {
+          if (!kw) return true
+          const t = db.types.find((x) => x.id === e.typeId)
+          const acc = e.accountId ? db.accounts.find((x) => x.id === e.accountId) : null
+          return (e.note || '').includes(kw) || (t?.name || '').includes(kw) || (acc?.name || '').includes(kw)
+        }),
+      (e) => e.ym,
+      dir,
+      (e) => e.id,
+    )
       .slice(0, 200)
       .map((e) => {
         const t = db.types.find((x) => x.id === e.typeId)
@@ -694,7 +724,7 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 统计 ----
   if (p1 === 'stats' && p2 === 'type-contribution') {
-    const limit = Math.min(60, Number(new URLSearchParams(path.split('?')[1] || '').get('limit')) || 12)
+    const limit = Math.min(60, Number(queryOf(path).get('limit')) || 12)
     const yms = pointsAsc().slice(0, limit).map((p) => p.ym)
     const sums = new Map<number, number>()
     for (const e of db.entries) {
@@ -712,11 +742,11 @@ export async function localHandle(method: string, path: string, body?: any): Pro
     return { months: yms, items }
   }
   if (p1 === 'stats' && p2 === 'networth') {
-    const limit = Math.min(120, Number(new URLSearchParams(path.split('?')[1] || '').get('limit')) || 36)
+    const limit = Math.min(120, Number(queryOf(path).get('limit')) || 36)
     return { points: pointsAsc().slice(-limit) }
   }
   if (p1 === 'stats' && p2 === 'daily-avg') {
-    const limit = Math.min(60, Number(new URLSearchParams(path.split('?')[1] || '').get('limit')) || 12)
+    const limit = Math.min(60, Number(queryOf(path).get('limit')) || 12)
     const pts = pointsAsc()
     const out = pts.map((p, i) => {
       const incomeTotal = db.entries
@@ -735,7 +765,7 @@ export async function localHandle(method: string, path: string, body?: any): Pro
   }
   if (p1 === 'stats' && p2 === 'summary') {
     // 与 server StatsService.summary 同口径（问题 5：总览环比/同比/日均增减）
-    const q = new URLSearchParams(path.split('?')[1] || '')
+    const q = queryOf(path)
     const pts = pointsAsc()
     const curYm = q.get('ym') && YM_RE.test(q.get('ym')!) ? q.get('ym')! : pts.at(-1)?.ym
     if (!curYm) return { ym: null }
@@ -775,7 +805,7 @@ export async function localHandle(method: string, path: string, body?: any): Pro
     }
   }
   if (p1 === 'stats' && p2 === 'interval') {
-    const q = new URLSearchParams(path.split('?')[1] || '')
+    const q = queryOf(path)
     const fromYm = q.get('from') || '', toYm = q.get('to') || ''
     if (!YM_RE.test(fromYm) || !YM_RE.test(toYm)) bad('月份格式应为 YYYY-MM')
     const pts = pointsAsc()
@@ -793,6 +823,30 @@ export async function localHandle(method: string, path: string, body?: any): Pro
 
   // ---- 系统 ----
   if (p1 === 'system') {
+    /**
+     * 离线版（APK）没有服务端，也就没有 git 引擎（D11）。
+     * 这里必须给出**同名路由**：SyncView / SyncBadge 一进页面就会读 /system/sync/status，
+     * 缺分支会走末尾的 404，之前的表现就是进「数据同步」直接白屏。
+     */
+    if (p2 === 'sync') {
+      if (p3 === 'status') {
+        // 形状对齐 shared 的 SyncStatus（字段名与可空性都按它写），
+        // 否则 SyncView / SyncBadge 读到的字段会跟着手抄版本漂移（SyncBadge 曾只声明 5 个字段）。
+        // 与真后端（apps/server/src/sync/sync.service.ts 的 status()）的差异，是有意的：
+        // mode 恒 'whole-file'（离线没有合并引擎）、maxAutoRetries/haltedAt 不填（永不自动重试，也就永不 halted）。
+        const st: SyncStatus = {
+          state: 'unconfigured', pendingCommits: 0, lastSyncAt: null, lastCommitOid: null,
+          lastError: '离线版不含 Git 同步引擎，请在电脑端配置', conflictCount: 0,
+          pushMode: 'manual', mergeEnabled: false, encrypt: false, mode: 'whole-file', retries: 0, nextRetryAt: null,
+        }
+        return st
+      }
+      if (p3 === 'conflicts') return { items: [], mode: 'merge', errorData: null, autoMerged: [] }
+      if (p3 === 'history') return { commits: [], nextCursor: null }
+      if (p3 === 'run' || p3 === 'resolve' || p3 === 'restore') bad('离线版不支持 Git 同步')
+      if (p3 === 'conflict') return { ok: true }
+      notFound(`离线模式未实现: ${m} ${path}`)
+    }
     if (p2 === 'health') return { ok: true, version: '0.2.0-offline', accounts: db.accounts.length, snapshots: db.snapshots.length, entries: db.entries.length }
     if (p2 === 'settings' && m === 'GET') return { settings: { ...DEFAULT_SETTINGS, ...db.settings } }
     if (p2 === 'settings' && m === 'PUT') {
@@ -804,10 +858,10 @@ export async function localHandle(method: string, path: string, body?: any): Pro
       return { settings: { ...DEFAULT_SETTINGS, ...db.settings } }
     }
     if (p2 === 'matrix' && m === 'GET') {
-      const limit = Math.min(120, Number(new URLSearchParams(path.split('?')[1] || '').get('limit')) || 24)
+      const limit = Math.min(120, Number(queryOf(path).get('limit')) || 24)
       return matrix(limit)
     }
-    if (p2 === 'matrix.csv') return { csv: matrixCsv() }
+    if (p2 === 'matrix.csv') return { csv: matrixCsv(parseTimeSortDir(queryOf(path).get('dir'))) }
     if (p2 === 'backup' && m === 'GET') {
       return {
         format: 'suiji-ledger-backup', version: 1, exportedAt: Date.now(), exportedAtText: stampText(),

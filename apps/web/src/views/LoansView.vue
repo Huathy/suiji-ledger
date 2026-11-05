@@ -3,9 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NavBar, Popup, Field, CellGroup, Button, RadioGroup, Radio, showSuccessToast, showConfirmDialog } from 'vant'
 import { api } from '../api/client'
-import { toCents, todayYMD } from '../../../../packages/shared/src/index'
+import { toCents, todayYMD, sortByTime } from '../../../../packages/shared/src/index'
 import { yuan as money } from '../utils/money'
 import { useGoBack } from '../utils/nav'
+import { useUiStore } from '../stores/ui'
 
 interface LoanRow {
   id: number; direction: 'in' | 'out'; counterparty: string; amount: number
@@ -15,6 +16,7 @@ interface LoanRow {
 
 const router = useRouter()
 const goBack = useGoBack()
+const ui = useUiStore()
 const loans = ref<LoanRow[]>([])
 const summary = ref({ borrowIn: 0, lendOut: 0 })
 const accounts = ref<{ id: number; name: string; emoji: string }[]>([])
@@ -35,7 +37,7 @@ function dueHint(l: LoanRow): string {
 
 async function load() {
   const [r, accs] = await Promise.all([
-    api<{ loans: LoanRow[]; summary: { borrowIn: number; lendOut: number } }>('/loans'),
+    api<{ loans: LoanRow[]; summary: { borrowIn: number; lendOut: number } }>('/loans?dir=' + ui.timeSort),
     api<{ id: number; name: string; emoji: string }[]>('/accounts').catch(() => []),
   ])
   loans.value = r.loans
@@ -120,10 +122,10 @@ async function saveEdit() {
   await load()
 }
 
-const outOpen = computed(() => loans.value.filter((l) => l.direction === 'out' && l.status !== 'settled'))
-const inOpen = computed(() => loans.value.filter((l) => l.direction === 'in' && l.status !== 'settled'))
-const outSettled = computed(() => loans.value.filter((l) => l.direction === 'out' && l.status === 'settled'))
-const inSettled = computed(() => loans.value.filter((l) => l.direction === 'in' && l.status === 'settled'))
+const outOpen = computed(() => sortByTime(loans.value.filter((l) => l.direction === 'out' && l.status !== 'settled'), (l) => l.date, ui.timeSort, (l) => l.id))
+const inOpen = computed(() => sortByTime(loans.value.filter((l) => l.direction === 'in' && l.status !== 'settled'), (l) => l.date, ui.timeSort, (l) => l.id))
+const outSettled = computed(() => sortByTime(loans.value.filter((l) => l.direction === 'out' && l.status === 'settled'), (l) => l.date, ui.timeSort, (l) => l.id))
+const inSettled = computed(() => sortByTime(loans.value.filter((l) => l.direction === 'in' && l.status === 'settled'), (l) => l.date, ui.timeSort, (l) => l.id))
 </script>
 
 <template>
@@ -145,6 +147,11 @@ const inSettled = computed(() => loans.value.filter((l) => l.direction === 'in' 
     </div>
 
     <template v-if="loaded">
+      <div class="loan-bar">
+        <span class="num">共 {{ loans.length }} 笔 · 按发生日期{{ ui.timeSort === 'asc' ? '顺序（早→晚）' : '倒序（晚→早）' }}</span>
+        <button type="button" class="dir-pill" :title="ui.timeSort === 'asc' ? '改为时间倒序（最新在前）' : '改为时间顺序（最早在前）'"
+          @click="ui.toggleTimeSort()">{{ ui.timeSort === 'asc' ? '时间 ↑ 顺序' : '时间 ↓ 倒序' }}</button>
+      </div>
       <div class="grp-head">⬆️ 借出（别人欠我）</div>
       <div class="card" style="padding: 4px 14px" v-if="outOpen.length">
         <div v-for="l in outOpen" :key="l.id" class="row-line">
@@ -280,6 +287,8 @@ const inSettled = computed(() => loans.value.filter((l) => l.direction === 'in' 
 
 <style>
 .grp-head { font-size: 13px; font-weight: 600; color: var(--t1); padding: 14px 18px 6px; }
+.loan-bar { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--t3); padding: 6px 18px 0; }
+.loan-bar .dir-pill { margin-left: auto; }
 .loan-status { font-size: 9px; border-radius: 4px; padding: 0 4px; margin-left: 4px; font-weight: 400; }
 .st-open { color: var(--warn); border: 1px solid var(--warn); }
 .st-partial { color: var(--brand); border: 1px solid var(--brand); }

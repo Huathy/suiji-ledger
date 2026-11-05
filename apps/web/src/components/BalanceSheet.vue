@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
 import { money } from '../utils/money'
+import { sortByTime, type TimeSortDir } from '../../../../packages/shared/src/index'
+import { useUiStore } from '../stores/ui'
 
 interface MatrixData {
   accounts: { id: number; name: string; emoji: string; kind: string }[]
@@ -14,10 +16,11 @@ interface MatrixData {
 }
 
 const router = useRouter()
+const ui = useUiStore()
 const data = ref<MatrixData | null>(null)
 /** 列排序：key = 'ym' | 'acc:<id>' | 'assetsTotal' | 'networth' | 'delta' | 'dailyAvg' */
 const sortKey = ref('ym')
-const sortDir = ref<'asc' | 'desc'>('asc')
+const sortDir = ref<'asc' | 'desc'>(ui.timeSort)
 
 // 横向溢出提示（窄 PC 窗口下用户不知道右侧还有列）
 const scrollEl = ref<HTMLElement | null>(null)
@@ -57,7 +60,6 @@ const columns = computed(() => {
 
 /** 取某行某列的可比较数值（null 排最后） */
 function cellValue(row: MatrixData['rows'][number], key: string): number | null {
-  if (key === 'ym') return Number(row.ym.replace('-', ''))
   if (key === 'assetsTotal') return row.assetsTotal
   if (key === 'networth') return row.networth
   if (key === 'delta') return row.delta
@@ -70,25 +72,34 @@ function cellValue(row: MatrixData['rows'][number], key: string): number | null 
 }
 
 const rows = computed(() => {
-  const list = (data.value?.rows || []).slice()
-  list.sort((a, b) => {
+  const list = data.value?.rows || []
+  // 月份列走时间排序：字典序即时间序，倒序=新的在前、顺序=旧的在前
+  if (sortKey.value === 'ym') return sortByTime(list, (r) => r.ym, sortDir.value)
+  const out = list.slice()
+  out.sort((a, b) => {
     const va = cellValue(a, sortKey.value)
     const vb = cellValue(b, sortKey.value)
-    if (va === null && vb === null) return 0
+    if (va === null && vb === null) return 0 // 同空值：交给稳定排序保持原时间序
     if (va === null) return 1
     if (vb === null) return -1
     return sortDir.value === 'asc' ? va - vb : vb - va
   })
-  return list
+  return out
 })
 
 function sortBy(key: string) {
-  if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-  else {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+    // 点的是时间列 → 把方向同步成全站偏好
+    if (key === 'ym') ui.setTimeSort(sortDir.value as TimeSortDir)
+  } else {
     sortKey.value = key
-    sortDir.value = key === 'ym' ? 'asc' : 'desc'
+    // 时间列跟随全局方向（默认倒序=新的在前）；金额列默认从大到小
+    sortDir.value = key === 'ym' ? ui.timeSort : 'desc'
   }
 }
+/** 全局时间方向变化（设置页/其它页切换）→ 本表月份列跟着翻 */
+watch(() => ui.timeSort, (d) => { if (sortKey.value === 'ym') sortDir.value = d })
 function indicator(key: string) {
   if (sortKey.value !== key) return '↕'
   return sortDir.value === 'asc' ? '↑' : '↓'
@@ -102,7 +113,11 @@ function openMonth(ym: string) {
   <div class="card" v-if="data && data.rows.length">
     <div class="sec-t">
       📊 资产负债总表
-      <span class="hint">月份 × 账户 · 单位：元 · 点列头排序 · 点击行看月度详情</span>
+      <span class="hint">月份 × 账户 · 单位：元 · 点列头排序（时间列可切倒序/顺序）· 点击行看月度详情</span>
+      <button type="button" class="dir-pill" :title="ui.timeSort === 'asc' ? '当前：时间顺序（旧→新），点击改为倒序' : '当前：时间倒序（新→旧），点击改为顺序'"
+        @click="ui.toggleTimeSort()">
+        时间 {{ ui.timeSort === 'asc' ? '↑ 顺序' : '↓ 倒序' }}
+      </button>
     </div>
     <div class="matrix-wrap">
       <div ref="scrollEl" class="matrix-scroll" style="max-height: 480px" @scroll.passive="measureScroll">

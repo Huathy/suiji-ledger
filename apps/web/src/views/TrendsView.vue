@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
+import { computed, onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
 import { NavBar, Popup, Picker, Button } from 'vant'
 import * as echarts from 'echarts/core'
 import { LineChart, BarChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { api } from '../api/client'
+import { sortByTime } from '../../../../packages/shared/src/index'
 import { useUiStore } from '../stores/ui'
 import { money } from '../utils/money'
 import SyncBadge from '../components/SyncBadge.vue'
@@ -151,6 +152,9 @@ function monthLabel(ym: string) {
   return `${ym}${p ? `（${p.recordDate}）` : ''}`
 }
 
+/** 区间月份选择器：按全站时间方向排（图表数据本身恒为时间顺序，保证折线/柱状走势正确） */
+const pickPoints = computed(() => sortByTime(points.value, (p) => p.ym, ui.timeSort))
+
 onMounted(loadAll)
 watch(range, loadAll)
 watch(() => ui.isDark, () => {
@@ -233,7 +237,7 @@ watch(() => ui.isDark, () => {
 
     <!-- 区间月份选择 -->
     <Popup :show="pickShow !== null" position="bottom" round @update:show="(v: boolean) => (pickShow = null)">
-      <Picker :columns="points.map((p) => ({ text: monthLabel(p.ym), value: p.ym }))" title="选择记录月份"
+      <Picker :columns="pickPoints.map((p) => ({ text: monthLabel(p.ym), value: p.ym }))" title="选择记录月份"
         @confirm="(e: any) => { if (pickShow === 'from') fromYm = e.selectedValues[0]; else toYm = e.selectedValues[0]; pickShow = null }"
         @cancel="pickShow = null" />
     </Popup>

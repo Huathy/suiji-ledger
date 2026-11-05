@@ -3,9 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NavBar, Button, Popup, Field, CellGroup, showConfirmDialog, showSuccessToast } from 'vant'
 import { api } from '../api/client'
-import { fromCents } from '../../../../packages/shared/src/index'
+import { fromCents, sortByTime } from '../../../../packages/shared/src/index'
 import { money, deltaClass } from '../utils/money'
 import { useGoBack } from '../utils/nav'
+import { useUiStore } from '../stores/ui'
 
 interface AccountRow { id: number; name: string; emoji: string; kind: string; group: string | null; initBalance: number; inNetWorth: boolean; archived: boolean; note: string | null; balance: number }
 interface Snap { ym: string; balance: number; recordDate: string; note: string | null }
@@ -13,18 +14,23 @@ interface Snap { ym: string; balance: number; recordDate: string; note: string |
 const route = useRoute()
 const router = useRouter()
 const goBack = useGoBack()
+const ui = useUiStore()
 const accountId = Number(route.params.id)
 const account = ref<AccountRow | null>(null)
 const snaps = ref<Snap[]>([])
 
+/**
+ * 历史余额：差额一律按「时间顺序」递推（上月 → 本月），
+ * 只有展示顺序跟随全站时间排序开关（倒序=最新在前 / 顺序=最早在前），
+ * 这样切方向不会把 delta 算反。接口返回的 rows 是月份升序。
+ */
 const rows = computed(() => {
-  const out: { ym: string; recordDate: string; balance: number; delta: number | null }[] = []
-  const asc = [...snaps.value].reverse()
-  asc.forEach((s, i) => {
-    const prev = i > 0 ? asc[i - 1].balance : account.value?.initBalance ?? 0
-    out.push({ ym: s.ym, recordDate: s.recordDate, balance: s.balance, delta: s.balance - prev })
+  const asc: { ym: string; recordDate: string; balance: number; delta: number | null }[] = []
+  snaps.value.forEach((s, i) => {
+    const prev = i > 0 ? snaps.value[i - 1].balance : account.value?.initBalance ?? 0
+    asc.push({ ym: s.ym, recordDate: s.recordDate, balance: s.balance, delta: s.balance - prev })
   })
-  return out.reverse()
+  return sortByTime(asc, (r) => r.ym, ui.timeSort)
 })
 
 onMounted(async () => {
@@ -103,7 +109,11 @@ async function saveBalance() {
       <Button size="small" round plain type="primary" block style="margin-top: 6px" @click="openEditBalance">✏️ 修改余额（单独生成平账记录）</Button>
     </div>
     <div class="card" style="padding: 4px 14px" v-if="rows.length">
-      <div class="sec-t" style="padding: 10px 2px 4px">历史余额</div>
+      <div class="sec-t" style="padding: 10px 2px 4px">历史余额
+        <span class="hint">共 {{ rows.length }} 次快照 · 按时间{{ ui.timeSort === 'asc' ? '顺序（早→新）' : '倒序（新→早）' }}</span>
+        <button type="button" class="dir-pill" :title="ui.timeSort === 'asc' ? '改为时间倒序（最新在前）' : '改为时间顺序（最早在前）'"
+          @click="ui.toggleTimeSort()">{{ ui.timeSort === 'asc' ? '↑ 顺序' : '↓ 倒序' }}</button>
+      </div>
       <div v-for="r in rows" :key="r.ym" class="row-line hist-row" role="link" tabindex="0" :aria-label="r.ym + ' 月度详情'"
         @click="router.push('/month/' + r.ym)" @keyup.enter="router.push('/month/' + r.ym)">
         <span class="num" style="font-size: 13px">{{ r.ym }} <span style="font-size: 10px; color: var(--t3)">{{ r.recordDate }}</span></span>
