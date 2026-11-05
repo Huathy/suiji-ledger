@@ -8,7 +8,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@server-sync/*": ["../server/src/sync/*"],
+      "node:path": ["./src/local/node-path-shim.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
 }

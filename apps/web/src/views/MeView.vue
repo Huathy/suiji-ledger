@@ -158,7 +158,7 @@ async function logout() {
     <div class="card" style="padding: 2px 14px">
       <div class="menu-line" @click="router.push('/types')"><span>🏷</span>类型管理<span class="arr">›</span></div>
       <div class="menu-line" @click="router.push('/accounts')"><span>🏦</span>账户管理<span class="arr">›</span></div>
-      <div class="menu-line" v-if="!OFFLINE" @click="router.push('/sync')"><span>🔄</span>数据同步（Git）<span class="arr">›</span></div>
+      <div class="menu-line" @click="router.push('/sync')"><span>🔄</span>数据同步（Git）<span class="arr">›</span></div>
     </div>
 
     <div class="grp-label">导入导出</div>
@@ -182,8 +182,8 @@ async function logout() {
       <div class="menu-line" @click="router.push('/recycle')"><span>🗑</span>回收站<span class="arr">›</span></div>
     </div>
     <div v-if="OFFLINE" style="font-size: 10.5px; color: var(--t3); margin: 8px 18px 0; line-height: 1.8">
-      📱 <b>离线模式</b>：数据只存在本机应用内，不联网、不与电脑自动同步。卸载或清除应用数据即丢失，请定期「导出全量备份 JSON」。<br />
-      🔁 <b>与电脑互搬数据</b>：手机「导出全量备份 JSON」→ 文件落在 <span class="num">下载/SuijiLedger/</span> → 传到电脑后在「从备份恢复」里选中它；电脑搬手机同理。<br />
+      📱 <b>离线模式</b>：数据存在本机应用内。「数据同步（Git）」可直连你的私有仓库自动同步（与电脑端同一仓库即互通）；不开同步时，卸载或清除应用数据即丢失，请定期「导出全量备份 JSON」。<br />
+      🔁 <b>与电脑互搬数据（不开同步时）</b>：手机「导出全量备份 JSON」→ 文件落在 <span class="num">下载/SuijiLedger/</span> → 传到电脑后在「从备份恢复」里选中它；电脑搬手机同理。<br />
       ⚖️ <b>覆盖 / 合并</b>：「覆盖」清空本机后整库替换；「合并」按「账户名+性质」归并，同月快照以备份为准——两边都记过账就用「合并」。
     </div>
 

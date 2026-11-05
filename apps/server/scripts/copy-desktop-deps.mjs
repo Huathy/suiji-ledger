@@ -110,3 +110,19 @@ if (absent.length) {
   console.error('[deps] 拷贝失败:', absent.join(', '))
   process.exitCode = 1
 }
+
+// 出包前自检（2026-11-05 便携版每次闪退的根因：stage.py 在 deps 之后跑，整目录删了重铺，
+// git 包丢了 → 装出来的包 require('isomorphic-git') 即 MODULE_NOT_FOUND → 主进程自检弹框 → 用户视角"闪退"）。
+// 正确顺序：stage.py（铺底）→ 本脚本（补 git+prisma）→ electron-builder。缺任一项直接炸，不出残包。
+const MUST = ['isomorphic-git', 'isomorphic-git/http/node', '@prisma/client', '@nestjs/core',
+  '@nestjs/common', '@nestjs/platform-express', 'reflect-metadata', 'rxjs']
+const lacking = MUST.filter((m) => {
+  if (m === 'isomorphic-git/http/node') return !fs.existsSync(path.join(TO, 'isomorphic-git', 'http', 'node', 'index.js'))
+  return !fs.existsSync(path.join(TO, m, 'package.json'))
+})
+if (lacking.length) {
+  console.error('[deps] 自检失败：目标缺 ' + lacking.join(', ') + '，不出包。请按 stage → 本脚本顺序重跑。')
+  process.exitCode = 1
+} else {
+  console.log('[deps] 自检通过：运行时闭包完整')
+}
